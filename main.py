@@ -20,7 +20,7 @@ class Game:
         image = load_img('sub.png', True, 3)
         #main sprites
         self.player = Player(WIDTH / 2, HEIGHT / 2, image)
-        self.trident = Trident(*self.player.rect.center, load_img('trident.png', True, 3))
+        self.trident = Anchor(*self.player.rect.center, load_img('anchor.png', True, 0.25))
 
         #group
         self.enemies = []
@@ -42,7 +42,7 @@ class Game:
 
     def main(self):
         clicked = False
-        e = Enemy(load_imgs('squid', True, 0.5))
+        e = Enemy(load_imgs('squid', True, 0.7))
 
         self.enemies.append(e)
 

@@ -46,7 +46,7 @@ class Player(Entity):
             if abs(self.x_vel) < 1 and abs(self.y_vel) < 1:
                 self.on_cooldown = False
 
-class Trident(Entity):
+class Anchor(Entity):
     SPEED = 30
 
     def __init__(self, x: int, y: int, image: pygame.surface.Surface):
