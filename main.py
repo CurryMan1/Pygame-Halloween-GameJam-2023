@@ -17,19 +17,16 @@ pygame.display.set_caption('Thalassophobia')
 
 class Game:
     def __init__(self):
-        surf = pygame.surface.Surface((50, 50), pygame.SRCALPHA)
-        surf.fill('red')
-
-        images = [surf, surf]
+        image = load_img('sub.png', True, 3)
         #main sprites
-        self.player = Player(WIDTH / 2, HEIGHT / 2, images)
-        self.trident = Trident(*self.player.rect.center)
+        self.player = Player(WIDTH / 2, HEIGHT / 2, image)
+        self.trident = Trident(*self.player.rect.center, load_img('trident.png', True, 3))
 
         #group
         self.enemies = []
 
         #bg
-        self.bg = load_img('ocean.png', True, 15)
+        self.bg = load_img('ocean.png', False, 15)
         self.bg_tiles = []  #layers for parallax effect
         self.bg_w, self.bg_h = self.bg.get_rect().size
         self.bg_dimensions = [ceil(WIDTH / self.bg_w) + 1, ceil(HEIGHT / self.bg_h) + 1]  #0 is x, 1 is y
@@ -45,7 +42,7 @@ class Game:
 
     def main(self):
         clicked = False
-        e = Enemy()
+        e = Enemy(load_imgs('squid', True, 0.5))
 
         self.enemies.append(e)
 
@@ -63,7 +60,7 @@ class Game:
                     if keys[pygame.K_SPACE] or mouse_btns[2]:
                         self.player.x_vel, self.player.y_vel =\
                             calculate_kb(self.player.rect.center, mouse_pos, self.player.SPEED)
-                        self.player.og_img = self.player.images[1]
+                        self.player.og_img = self.player.image
 
                 #throw trident?
                 if mouse_btns[0]:
@@ -128,8 +125,7 @@ class Game:
             elif self.trident.mode == 'away':
                 #trident-enemies
                 for enemy in pygame.sprite.spritecollide(self.trident, self.enemies, False, pygame.sprite.collide_mask):
-                    pass
-                    'make enemy tint red when hit and lose some damage'
+                    self.trident.mode = 'return'
 
 
             #player-enemies

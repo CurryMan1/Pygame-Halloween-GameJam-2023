@@ -20,8 +20,8 @@ class Player(Entity):
     SPEED = 12
     WATER_RESISTANCE = 0.95 #for timesing
 
-    def __init__(self, x: int, y: int, images: list):
-        super().__init__(x, y, images[0])
+    def __init__(self, x: int, y: int, image: pygame.surface.Surface):
+        super().__init__(x, y, image)
 
         #(changeable) stats
         self.damage = 5
@@ -29,7 +29,6 @@ class Player(Entity):
 
         self.mask = pygame.mask.from_surface(self.image)
         self.og_img = self.image
-        self.images = images
         self.last_shot = self.shooting_delay
         self.angle = 0
         self.x_vel, self.y_vel = 0, 0
@@ -43,9 +42,6 @@ class Player(Entity):
         if self.last_shot < self.shooting_delay:
             self.last_shot += 1
 
-        if self.og_img == self.images[1]:
-            self.og_img = self.images[0]
-
         if self.on_cooldown:
             if abs(self.x_vel) < 1 and abs(self.y_vel) < 1:
                 self.on_cooldown = False
@@ -53,9 +49,7 @@ class Player(Entity):
 class Trident(Entity):
     SPEED = 30
 
-    def __init__(self, x: int, y: int):
-        image = pygame.surface.Surface((10, 75), pygame.SRCALPHA)
-        image.fill('green')
+    def __init__(self, x: int, y: int, image: pygame.surface.Surface):
         super().__init__(x, y, image)
         self.og_img = self.image
         self.mask = pygame.mask.from_surface(self.image)
@@ -96,12 +90,13 @@ class Trident(Entity):
             self.rect.right > WIDTH
 
 class Enemy(Entity):
-    SPEED = 11
+    SPEED = 10
     WATER_RESISTANCE = 0.95
+    ANIMATION_DELAY = 4
 
-    def __init__(self):
-        image = pygame.surface.Surface((75, 75), pygame.SRCALPHA)
-        image.fill('purple')
+    def __init__(self, images):
+        self.images = images
+        image = images[0]
 
         w = image.get_width()
         h = image.get_height()
@@ -118,15 +113,23 @@ class Enemy(Entity):
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = 0, 0
         self.angle = 0
+        self.animation_count = 0
 
         self.on_cooldown = False
+        self.hp = 100
 
     def update(self, player_x_vel, player_y_vel):
+        self.animation_count += 1
+        if self.animation_count == len(self.images)*self.ANIMATION_DELAY:
+            self.animation_count = 0
+
+        self.og_img = self.images[self.animation_count//self.ANIMATION_DELAY]
+
         #rotate towards player
         x, y = WIDTH / 2, HEIGHT / 2
         pos = pygame.math.Vector2(x, y) - self.rect.center
         self.angle = pos.angle_to((0, 0))
-        self.image = pygame.transform.rotate(self.og_img, self.angle - 90)
+        self.image = pygame.transform.rotate(self.og_img, self.angle-90)
         self.rect = self.image.get_rect(center=self.rect.center)
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -142,6 +145,9 @@ class Enemy(Entity):
 
         self.rect.x += self.x_vel + player_x_vel
         self.rect.y += self.y_vel + player_y_vel
+
+    def hit(self, damage):
+        self.hp -= damage
 
 class Coin(Entity):
     BOUND = 3000
