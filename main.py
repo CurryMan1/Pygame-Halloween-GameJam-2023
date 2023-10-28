@@ -27,6 +27,7 @@ class Game:
         self.spear = Spear(*self.player.rect.center)
 
         #group
+        self.enemies = []
 
         #bg
         self.bg = load_img('ocean.png', True, 15)
@@ -45,6 +46,7 @@ class Game:
 
     def main(self):
         clicked = False
+        e = Enemy()
 
         while True:
             CLOCK.tick(FPS)
@@ -117,7 +119,7 @@ class Game:
                     self.spear.mode = 'still'
                     self.spear.rect.center = self.player.rect.center
 
-            ##################################
+            ####################################
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()

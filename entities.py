@@ -11,12 +11,9 @@ class Entity(pygame.sprite.Sprite):
     def draw(self, disp: pygame.surface.Surface):
         disp.blit(self.image, (self.rect.x, self.rect.y))
 
-    def get_bound(self, WIDTH, HEIGHT, bound=0):
-        if self.rect.top < 0 or\
-            self.rect.bottom > HEIGHT or\
-            self.rect.left < 0 or\
-            self.rect.right > WIDTH:
-            return True
+    def get_bound(self, WIDTH, HEIGHT, bound):
+        return self.rect.centerx not in range(-bound, WIDTH + bound
+            ) or self.rect.centery not in range(-bound, HEIGHT + bound)
 
 class Player(Entity):
     SPEED = 12
@@ -91,8 +88,38 @@ class Spear(Entity):
             self.x_vel *= -1
             self.y_vel *= -1
 
+    def get_bound(self, WIDTH, HEIGHT, bound=0):
+        return self.rect.top < 0 or\
+            self.rect.bottom > HEIGHT or\
+            self.rect.left < 0 or\
+            self.rect.right > WIDTH
+
 class Enemy(Entity):
-    pass
+    SPEED = 12
+
+    def __init__(self):
+        image = pygame.surface.Surface((75, 75), pygame.SRCALPHA)
+        image.fill('purple')
+        super().__init__(x, y, image)
+        self.og_img = self.image
+        self.mask = pygame.mask.from_surface(self.image)
+        self.x_vel, self.y_vel = 0, 0
+        self.angle = 0
+
+    def update(self, width, height, player_x_vel, player_y_vel):
+        #rotate towards player
+        x, y = width / 2, height / 2
+        pos = pygame.math.Vector2(x, y) - self.rect.center
+        self.angle = pos.angle_to((0, 0))
+        self.image = pygame.transform.rotate(self.og_img, self.angle - 90)
+        self.rect = self.image.get_rect(center=self.rect.center)
+        self.mask = pygame.mask.from_surface(self.image)
+
+        #vel
+        if not self.on_cooldown:
+            self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
+            self.rect.x += self.x_vel + player_x_vel
+            self.rect.y += self.y_vel + player_y_vel
 
 class Coin(Entity):
     BOUND = 3000
