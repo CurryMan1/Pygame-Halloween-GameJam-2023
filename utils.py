@@ -1,6 +1,8 @@
 import pygame
 from os import listdir
 
+WIDTH, HEIGHT = 1500, 900
+
 #colour
 WHITE = (255, 255, 255)
 COFFEE_BLUE = (192, 255, 238)
@@ -61,6 +63,6 @@ def calculate_kb(pos1, pos2, power):
 
     #calculate ratio
     total = abs(x) + abs(y)
-    base = power/total
+    base = power/total if total else 0
 
     return base*x, base*y

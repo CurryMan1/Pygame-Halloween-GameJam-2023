@@ -10,7 +10,6 @@ pygame.init()
 pygame.mouse.set_visible(False)
 
 FPS = 60
-WIDTH, HEIGHT = 1500, 900
 CLOCK = pygame.time.Clock()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 DISPLAY = pygame.surface.Surface((WIDTH, HEIGHT))
@@ -24,7 +23,7 @@ class Game:
         images = [surf, surf]
         #main sprites
         self.player = Player(WIDTH / 2, HEIGHT / 2, images)
-        self.spear = Spear(*self.player.rect.center)
+        self.trident = Trident(*self.player.rect.center)
 
         #group
         self.enemies = []
@@ -48,6 +47,9 @@ class Game:
         clicked = False
         e = Enemy()
 
+        self.enemies.append(e)
+
+        #game loop
         while True:
             CLOCK.tick(FPS)
 
@@ -63,11 +65,11 @@ class Game:
                             calculate_kb(self.player.rect.center, mouse_pos, self.player.SPEED)
                         self.player.og_img = self.player.images[1]
 
-                #throw spear?
+                #throw trident?
                 if mouse_btns[0]:
-                    if self.spear.mode == 'still' and not clicked:
-                        self.spear.mode = 'away'
-                        self.spear.x_vel, self.spear.y_vel = calculate_kb(mouse_pos, self.spear.rect.center, self.spear.SPEED)
+                    if self.trident.mode == 'still' and not clicked:
+                        self.trident.mode = 'away'
+                        self.trident.x_vel, self.trident.y_vel = calculate_kb(mouse_pos, self.trident.rect.center, self.trident.SPEED)
                     clicked = True
             else:
                 clicked = False
@@ -100,24 +102,45 @@ class Game:
 
                 DISPLAY.blit(bg, (x, y))
 
+            #enemies
+            for enemy in self.enemies:
+                enemy.update(player_x_vel, player_y_vel)
+                enemy.draw(DISPLAY)
+
             #player
             self.player.update()
             self.player.draw(DISPLAY)
 
-            #spear
-            self.spear.update(WIDTH, HEIGHT, player_x_vel, player_y_vel)
-            self.spear.draw(DISPLAY)
+            #trident
+            self.trident.update(player_x_vel, player_y_vel)
+            self.trident.draw(DISPLAY)
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
 
             #COLLISION
+            #trident
+            if self.trident.mode == 'return':
+                #player-trident
+                if pygame.sprite.spritecollideany(self.player, [self.trident], pygame.sprite.collide_mask):
+                    self.trident.mode = 'still'
+                    self.trident.rect.center = self.player.rect.center
+            elif self.trident.mode == 'away':
+                #trident-enemies
+                for enemy in pygame.sprite.spritecollide(self.trident, self.enemies, False, pygame.sprite.collide_mask):
+                    pass
+                    'make enemy tint red when hit and lose some damage'
 
-            #player-spear
-            if self.spear.mode == 'return':
-                if pygame.sprite.spritecollideany(self.player, [self.spear], pygame.sprite.collide_mask):
-                    self.spear.mode = 'still'
-                    self.spear.rect.center = self.player.rect.center
+
+            #player-enemies
+            collided_enemies = pygame.sprite.spritecollide(self.player, self.enemies, False, pygame.sprite.collide_mask)
+            if collided_enemies:
+                self.player.x_vel *= -1
+                self.player.y_vel *= -1
+                self.player.on_cooldown = True
+            for enemy in collided_enemies:
+                enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, 7)
+                enemy.on_cooldown = True
 
             ####################################
             for event in pygame.event.get():
