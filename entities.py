@@ -3,7 +3,27 @@ import pygame
 import random
 #files
 from utils import *
-from healthbar import Healthbar
+
+class Healthbar:
+    WIDTH = 130
+    HEIGHT = 20
+    BORDER = 3
+
+    def __init__(self, max_hp):
+        self.max_hp = max_hp
+        self.hp = max_hp
+
+    def draw(self, surf, center):
+        border = pygame.surface.Surface((self.WIDTH + self.BORDER * 2, self.HEIGHT + self.BORDER * 2))
+        border.fill(BLACK)
+        redbar = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
+        redbar.fill(RED)
+        greenbar = pygame.surface.Surface((self.WIDTH * (self.hp / self.max_hp), self.HEIGHT))
+        greenbar.fill(GREEN)
+
+        redbar.blit(greenbar, (0, 0))
+        border.blit(redbar, (self.BORDER, self.BORDER))
+        surf.blit(border, (center[0] - self.WIDTH / 2, center[1]-70))
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, image: pygame.surface.Surface):
@@ -24,7 +44,8 @@ class Player(Entity):
     WATER_RESISTANCE = 0.95 #for timesing
 
     def __init__(self, x: int, y: int, images: list):
-        super().__init__(x, y, images[0])
+        self.img_no = 0
+        super().__init__(x, y, images[self.img_no])
 
         #(changeable) stats
         self.damage = 5
@@ -46,9 +67,10 @@ class Player(Entity):
         img = self.image
 
         if mousex < WIDTH/2:
-            self.image = self.images[0]
+            self.img_no = 0
         else:
-            self.image = self.images[1]
+            self.img_no = 1
+        self.image = self.images[self.img_no]
 
         if self.image != img:
             self.mask = pygame.mask.from_surface(self.image)
@@ -111,6 +133,7 @@ class Enemy(Entity):
     SPEED = 10
     WATER_RESISTANCE = 0.95
     ANIMATION_DELAY = 5
+    KB = 7
 
     def __init__(self, images):
         self.images = images

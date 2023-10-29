@@ -6,9 +6,11 @@ TINT_FADE = 25
 
 #colour
 WHITE = (255, 255, 255)
+BUBBLE_BLUE = (0, 191, 255)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
-GREY = (28, 28, 28)
+DARK_GREY = (28, 28, 28)
+LIGHT_GREY = (188, 188, 188)
 BLACK = (0, 0, 0)
 
 #font

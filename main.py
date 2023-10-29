@@ -26,6 +26,9 @@ class Game:
         #group
         self.enemy_group = []
         self.heart_group = []
+
+        #particles
+        #[pos, velocity, timer, speed, colour]
         self.particles = []
 
         #bg
@@ -40,6 +43,7 @@ class Game:
 
         #other
         self.crosshair = load_img('crosshair.png', True, 3)
+        self.overlay = load_img('overlay.png', True)
         self.hearts = 0
 
         self.main()
@@ -49,7 +53,7 @@ class Game:
         e = Enemy(load_imgs('squid', True, 0.7))
 
         self.enemy_group.append(e)
-
+        screen_shake = 0
         #game loop
         while True:
             CLOCK.tick(FPS)
@@ -106,6 +110,19 @@ class Game:
 
                 DISPLAY.blit(bg, (x, y))
 
+            #particles
+            for particle in self.particles:
+                particle[0][0] += particle[1][0] + player_x_vel
+                particle[0][1] += particle[1][1] + player_y_vel
+                particle[2] -= particle[3]
+
+                pygame.draw.circle(DISPLAY, WHITE,
+                                   particle[0], particle[2] + 1)
+                pygame.draw.circle(DISPLAY, particle[4],
+                                   particle[0], particle[2])
+                if particle[2] <= 0:
+                    self.particles.remove(particle)
+
             #heart_group
             for heart in self.heart_group:
                 condition_of_heart = heart.update(player_x_vel, player_y_vel)
@@ -114,7 +131,7 @@ class Game:
                 heart.draw(DISPLAY)
 
             #anchor line
-            pygame.draw.line(DISPLAY, GREY, self.anchor.rect.center, self.player.rect.center, 5)
+            pygame.draw.line(DISPLAY, DARK_GREY, self.anchor.rect.center, self.player.rect.center, 5)
 
             #enemy_group
             for enemy in self.enemy_group:
@@ -126,10 +143,15 @@ class Game:
             #player
             self.player.update(mouse_pos[0])
             self.player.draw(DISPLAY)
+            self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
+                               1, 10, 10, 0.1, [BUBBLE_BLUE])
 
             #anchor
             self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
             self.anchor.draw(DISPLAY)
+
+            #overlay
+            DISPLAY.blit(self.overlay, (0, 0))
 
             #UI
             #hearts
@@ -160,12 +182,12 @@ class Game:
             #player-enemy_group
             collided_enemies = pygame.sprite.spritecollide(self.player, self.enemy_group, False, pygame.sprite.collide_mask)
             if collided_enemies:
-                self.player.x_vel *= -1
-                self.player.y_vel *= -1
+                self.player.x_vel, self.player.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, enemy.KB)
                 self.player.on_cooldown = True
                 self.player.tint = 255
+                screen_shake = 20
             for enemy in collided_enemies:
-                enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, 7)
+                enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, enemy.KB)
                 enemy.on_cooldown = True
 
             #player-heart
@@ -179,7 +201,12 @@ class Game:
                     pygame.quit()
                     sys.exit()
 
-            SCREEN.blit(DISPLAY, (0, 0))
+            screen_offset = [0, 0]
+            if screen_shake > 0:
+                screen_offset = [random.randint(-4, 4), random.randint(-4, 4)]
+                screen_shake -= 1
+
+            SCREEN.blit(DISPLAY, screen_offset)
 
             pygame.display.update()
 
