@@ -20,7 +20,7 @@ class Game:
     def __init__(self):
         images = load_imgs('sub', True, 0.6)
         #main sprites
-        self.player = Player(WIDTH / 2, HEIGHT / 2, images)
+        self.player = Player(WIDTH/2, HEIGHT/2, images)
         self.anchor = Anchor(*self.player.rect.center, load_img('anchor.png', True, 0.25))
 
         #group
@@ -30,7 +30,7 @@ class Game:
 
         #bg
         self.bg = load_img('ocean.png', False, 15)
-        self.bg_tiles = []  #layers for parallax effect
+        self.bg_tiles = []
         self.bg_w, self.bg_h = self.bg.get_rect().size
         self.bg_dimensions = [ceil(WIDTH / self.bg_w) + 1, ceil(HEIGHT / self.bg_h) + 1]  #0 is x, 1 is y
 
@@ -151,8 +151,11 @@ class Game:
                     enemy.hit(10)
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
-                    enemy.tint = 255
                     self.anchor.mode = 'return'
+            #anchor-heart
+            for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
+                self.heart_group.remove(heart)
+                self.hearts += 1
 
             #player-enemy_group
             collided_enemies = pygame.sprite.spritecollide(self.player, self.enemy_group, False, pygame.sprite.collide_mask)

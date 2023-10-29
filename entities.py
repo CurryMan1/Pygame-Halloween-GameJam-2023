@@ -184,6 +184,7 @@ class Enemy(Entity):
 
     def hit(self, damage):
         self.healthbar.hp -= damage
+        self.tint = 255
 
 class Heart(Entity):
     BOUND = 3000
