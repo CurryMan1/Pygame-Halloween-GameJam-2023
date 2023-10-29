@@ -1,26 +1,9 @@
+#modules
 import pygame
 import random
+#files
 from utils import *
-
-class Healthbar:
-    WIDTH = 200
-    HEIGHT = 30
-    BORDER = 7
-    def __init__(self, max_hp):
-        self.max_hp = max_hp
-        self.hp = max_hp
-
-    def draw(self, surf, midtop):
-        border = pygame.surface.Surface((self.WIDTH + self.BORDER * 2, self.HEIGHT + self.BORDER * 2))
-        border.fill(BLACK)
-        redbar = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
-        redbar.fill(RED)
-        greenbar = pygame.surface.Surface((self.WIDTH * (self.hp / self.max_hp), self.HEIGHT))
-        greenbar.fill(GREEN)
-
-        redbar.blit(greenbar, (0, 0))
-        border.blit(redbar, (self.BORDER, self.BORDER))
-        surf.blit(border, (midtop[0] - self.WIDTH / 2, midtop[1] - self.HEIGHT-20))
+from healthbar import Healthbar
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, image: pygame.surface.Surface):
@@ -187,16 +170,18 @@ class Enemy(Entity):
 
     def draw(self, disp: pygame.surface.Surface):
         disp.blit(self.image, self.rect.topleft)
-        self.healthbar.draw(disp, self.rect.midtop)
+        self.healthbar.draw(disp, self.rect.center)
 
     def hit(self, damage):
         self.healthbar.hp -= damage
 
-class Coin(Entity):
+class Heart(Entity):
     BOUND = 3000
     AIR_RESISTANCE = 0.95
 
-    def __init__(self, x: int, y: int, image: pygame.surface.Surface, vel: int):
+    def __init__(self, x: int, y: int, vel: int, image: pygame.surface.Surface=None):
+        image = pygame.surface.Surface((50, 50))
+        image.fill(RED)
         super().__init__(x, y, image)
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = random.randint(-vel, vel), random.randint(-vel, vel)

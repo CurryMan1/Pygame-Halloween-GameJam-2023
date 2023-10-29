@@ -45,9 +45,9 @@ def load_sound(path, volume=None):
 
     return sound
 
-def draw_text(text, font, fg, x, y, size, surf, center=False, opacity=None):
+def draw_text(text, font, colour, x, y, size, surf, center=False, opacity=None):
     font = pygame.font.Font(font, size)
-    img = font.render(text, True, fg)
+    img = font.render(text, True, colour)
     if opacity:
         img.set_alpha(opacity)
 
