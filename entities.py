@@ -2,6 +2,26 @@ import pygame
 import random
 from utils import *
 
+class Healthbar:
+    WIDTH = 200
+    HEIGHT = 30
+    BORDER = 7
+    def __init__(self, max_hp):
+        self.max_hp = max_hp
+        self.hp = max_hp
+
+    def draw(self, surf, midtop):
+        border = pygame.surface.Surface((self.WIDTH + self.BORDER * 2, self.HEIGHT + self.BORDER * 2))
+        border.fill(BLACK)
+        redbar = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
+        redbar.fill(RED)
+        greenbar = pygame.surface.Surface((self.WIDTH * (self.hp / self.max_hp), self.HEIGHT))
+        greenbar.fill(GREEN)
+
+        redbar.blit(greenbar, (0, 0))
+        border.blit(redbar, (self.BORDER, self.BORDER))
+        surf.blit(border, (midtop[0] - self.WIDTH / 2, midtop[1] - self.HEIGHT-20))
+
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, image: pygame.surface.Surface):
         super().__init__()
@@ -20,13 +40,14 @@ class Player(Entity):
     SPEED = 12
     WATER_RESISTANCE = 0.95 #for timesing
 
-    def __init__(self, x: int, y: int, image: pygame.surface.Surface):
-        super().__init__(x, y, image)
+    def __init__(self, x: int, y: int, images: list):
+        super().__init__(x, y, images[0])
 
         #(changeable) stats
         self.damage = 5
         self.shooting_delay = 20
 
+        self.images = images
         self.mask = pygame.mask.from_surface(self.image)
         self.og_img = self.image
         self.last_shot = self.shooting_delay
@@ -35,9 +56,19 @@ class Player(Entity):
 
         self.on_cooldown = False
 
-    def update(self):
+    def update(self, mousex):
         self.x_vel *= self.WATER_RESISTANCE
         self.y_vel *= self.WATER_RESISTANCE
+
+        img = self.image
+
+        if mousex < WIDTH/2:
+            self.image = self.images[0]
+        else:
+            self.image = self.images[1]
+
+        if self.image != img:
+            self.mask = pygame.mask.from_surface(self.image)
 
         if self.last_shot < self.shooting_delay:
             self.last_shot += 1
@@ -45,6 +76,9 @@ class Player(Entity):
         if self.on_cooldown:
             if abs(self.x_vel) < 1 and abs(self.y_vel) < 1:
                 self.on_cooldown = False
+
+    def hit(self, damage):
+        self.hp -= damage
 
 class Anchor(Entity):
     SPEED = 30
@@ -58,14 +92,15 @@ class Anchor(Entity):
 
         self.mode = 'still'
 
-    def update(self, player_x_vel, player_y_vel):
+    def update(self, player_x_vel, player_y_vel, mouse_pos):
         if self.mode in ('still', 'return'):
             if self.mode == 'still':
-                x, y = pygame.mouse.get_pos()
+                x, y = mouse_pos
+                pos = pygame.math.Vector2(x, y) - self.rect.center
             else:
                 x, y = WIDTH / 2, HEIGHT / 2
+                pos = self.rect.center - pygame.math.Vector2(x, y)
 
-            pos = pygame.math.Vector2(x, y) - self.rect.center
             self.angle = pos.angle_to((0, 0))
             self.image = pygame.transform.rotate(self.og_img, self.angle - 90)
             self.rect = self.image.get_rect(center=self.rect.center)
@@ -75,8 +110,8 @@ class Anchor(Entity):
             self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
 
         if self.mode != 'still':
-            self.rect.x += self.x_vel + player_x_vel
-            self.rect.y += self.y_vel + player_y_vel
+            self.rect.x += self.x_vel+player_x_vel
+            self.rect.y += self.y_vel+player_y_vel
 
         if self.get_bound():
             self.mode = 'return'
@@ -92,7 +127,7 @@ class Anchor(Entity):
 class Enemy(Entity):
     SPEED = 10
     WATER_RESISTANCE = 0.95
-    ANIMATION_DELAY = 4
+    ANIMATION_DELAY = 5
 
     def __init__(self, images):
         self.images = images
@@ -116,7 +151,7 @@ class Enemy(Entity):
         self.animation_count = 0
 
         self.on_cooldown = False
-        self.hp = 100
+        self.healthbar = Healthbar(100)
 
     def update(self, player_x_vel, player_y_vel):
         self.animation_count += 1
@@ -146,8 +181,16 @@ class Enemy(Entity):
         self.rect.x += self.x_vel + player_x_vel
         self.rect.y += self.y_vel + player_y_vel
 
+        #dead?
+        if self.healthbar.hp <= 0:
+            return True
+
+    def draw(self, disp: pygame.surface.Surface):
+        disp.blit(self.image, self.rect.topleft)
+        self.healthbar.draw(disp, self.rect.midtop)
+
     def hit(self, damage):
-        self.hp -= damage
+        self.healthbar.hp -= damage
 
 class Coin(Entity):
     BOUND = 3000

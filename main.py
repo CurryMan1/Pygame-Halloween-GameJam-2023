@@ -13,14 +13,15 @@ FPS = 60
 CLOCK = pygame.time.Clock()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 DISPLAY = pygame.surface.Surface((WIDTH, HEIGHT))
+
 pygame.display.set_caption('Thalassophobia')
 
 class Game:
     def __init__(self):
-        image = load_img('sub.png', True, 3)
+        images = load_imgs('sub', True, 0.6)
         #main sprites
-        self.player = Player(WIDTH / 2, HEIGHT / 2, image)
-        self.trident = Anchor(*self.player.rect.center, load_img('anchor.png', True, 0.25))
+        self.player = Player(WIDTH / 2, HEIGHT / 2, images)
+        self.anchor = Anchor(*self.player.rect.center, load_img('anchor.png', True, 0.25))
 
         #group
         self.enemies = []
@@ -56,17 +57,20 @@ class Game:
             keys = pygame.key.get_pressed()
 
             if (keys[pygame.K_SPACE] or mouse_btns[2]) or mouse_btns[0]:
-                if not self.player.on_cooldown:
-                    if keys[pygame.K_SPACE] or mouse_btns[2]:
+                if keys[pygame.K_SPACE] or mouse_btns[2]:
+                    if not self.player.on_cooldown:
                         self.player.x_vel, self.player.y_vel =\
                             calculate_kb(self.player.rect.center, mouse_pos, self.player.SPEED)
                         self.player.og_img = self.player.image
 
-                #throw trident?
+                #throw anchor?
                 if mouse_btns[0]:
-                    if self.trident.mode == 'still' and not clicked:
-                        self.trident.mode = 'away'
-                        self.trident.x_vel, self.trident.y_vel = calculate_kb(mouse_pos, self.trident.rect.center, self.trident.SPEED)
+                    if not clicked:
+                        if self.anchor.mode == 'still':
+                            self.anchor.mode = 'away'
+                            self.anchor.x_vel, self.anchor.y_vel = calculate_kb(mouse_pos, self.anchor.rect.center, self.anchor.SPEED)
+                        elif self.anchor.mode == 'away':
+                            self.anchor.mode = 'return'
                     clicked = True
             else:
                 clicked = False
@@ -99,33 +103,40 @@ class Game:
 
                 DISPLAY.blit(bg, (x, y))
 
+            #anchor line
+            pygame.draw.line(DISPLAY, GREY, self.anchor.rect.center, self.player.rect.center, 5)
+
             #enemies
             for enemy in self.enemies:
-                enemy.update(player_x_vel, player_y_vel)
+                if enemy.update(player_x_vel, player_y_vel):
+                    self.enemies.remove(enemy)
                 enemy.draw(DISPLAY)
 
             #player
-            self.player.update()
+            self.player.update(mouse_pos[0])
             self.player.draw(DISPLAY)
 
-            #trident
-            self.trident.update(player_x_vel, player_y_vel)
-            self.trident.draw(DISPLAY)
+            #anchor
+            self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
+            self.anchor.draw(DISPLAY)
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
 
             #COLLISION
-            #trident
-            if self.trident.mode == 'return':
-                #player-trident
-                if pygame.sprite.spritecollideany(self.player, [self.trident], pygame.sprite.collide_mask):
-                    self.trident.mode = 'still'
-                    self.trident.rect.center = self.player.rect.center
-            elif self.trident.mode == 'away':
-                #trident-enemies
-                for enemy in pygame.sprite.spritecollide(self.trident, self.enemies, False, pygame.sprite.collide_mask):
-                    self.trident.mode = 'return'
+            #anchor
+            if self.anchor.mode == 'return':
+                #player-anchor
+                if pygame.sprite.spritecollideany(self.player, [self.anchor], pygame.sprite.collide_mask):
+                    self.anchor.mode = 'still'
+                    self.anchor.rect.center = self.player.rect.center
+            elif self.anchor.mode == 'away':
+                #anchor-enemies
+                for enemy in pygame.sprite.spritecollide(self.anchor, self.enemies, False, pygame.sprite.collide_mask):
+                    enemy.hit(10)
+                    enemy.on_cooldown = True
+                    enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
+                    self.anchor.mode = 'return'
 
 
             #player-enemies

@@ -5,11 +5,10 @@ WIDTH, HEIGHT = 1500, 900
 
 #colour
 WHITE = (255, 255, 255)
-COFFEE_BLUE = (192, 255, 238)
-DARK_BLUE = (28, 28, 122)
+GREEN = (0, 255, 0)
 RED = (255, 0, 0)
-ORANGE = (255, 115, 59)
-YELLOW = (255, 255, 0)
+GREY = (28, 28, 28)
+BLACK = (0, 0, 0)
 
 #font
 PIXEL_FONT = 'assets/other/pixel_font.ttf'
