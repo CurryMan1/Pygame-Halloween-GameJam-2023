@@ -145,17 +145,14 @@ class Game:
                 if pygame.sprite.spritecollideany(self.player, [self.anchor], pygame.sprite.collide_mask):
                     self.anchor.mode = 'still'
                     self.anchor.rect.center = self.player.rect.center
-            elif self.anchor.mode == 'away':
+            if self.anchor.mode != 'still':
                 #anchor-enemy_group
                 for enemy in pygame.sprite.spritecollide(self.anchor, self.enemy_group, False, pygame.sprite.collide_mask):
                     enemy.hit(10)
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
+                    enemy.tint = 255
                     self.anchor.mode = 'return'
-            #anchor-heart
-            for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
-                self.heart_group.remove(heart)
-                self.hearts += 1
 
             #player-enemy_group
             collided_enemies = pygame.sprite.spritecollide(self.player, self.enemy_group, False, pygame.sprite.collide_mask)
@@ -163,9 +160,15 @@ class Game:
                 self.player.x_vel *= -1
                 self.player.y_vel *= -1
                 self.player.on_cooldown = True
+                self.player.tint = 255
             for enemy in collided_enemies:
                 enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, 7)
                 enemy.on_cooldown = True
+
+            #player-heart
+            for heart in pygame.sprite.spritecollide(self.player, self.heart_group, False, pygame.sprite.collide_mask):
+                self.heart_group.remove(heart)
+                self.hearts += 1
 
             ####################################
             for event in pygame.event.get():

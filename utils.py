@@ -2,6 +2,7 @@ import pygame
 from os import listdir
 
 WIDTH, HEIGHT = 1500, 900
+TINT_FADE = 25
 
 #colour
 WHITE = (255, 255, 255)

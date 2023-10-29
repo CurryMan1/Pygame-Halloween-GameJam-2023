@@ -133,6 +133,7 @@ class Enemy(Entity):
         self.angle = 0
         self.animation_count = 0
 
+        self.tint = 0
         self.on_cooldown = False
         self.healthbar = Healthbar(100)
 
@@ -150,6 +151,15 @@ class Enemy(Entity):
         self.image = pygame.transform.rotate(self.og_img, self.angle-90)
         self.rect = self.image.get_rect(center=self.rect.center)
         self.mask = pygame.mask.from_surface(self.image)
+
+        if self.tint > 0:
+            #tint overlay
+            tint = self.image.copy()
+            tint.fill(RED, special_flags=pygame.BLEND_RGB_MULT)
+            tint.set_alpha(self.tint)
+
+            self.image.blit(tint, (0, 0))
+            self.tint -= TINT_FADE
 
         #vel
         if not self.on_cooldown:
