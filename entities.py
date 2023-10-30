@@ -188,6 +188,8 @@ class Enemy(Entity):
         #vel
         if not self.on_cooldown:
             self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
+            self.x_vel += random.randint(-2, 2)
+            self.y_vel += random.randint(-2, 2)
         else:
             if abs(self.x_vel) < 1 and abs(self.y_vel) < 1:
                 self.on_cooldown = False
