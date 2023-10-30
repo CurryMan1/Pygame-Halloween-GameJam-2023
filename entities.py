@@ -188,6 +188,7 @@ class Enemy(Entity):
         #vel
         if not self.on_cooldown:
             self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
+            #giration
             self.x_vel += random.randint(-2, 2)
             self.y_vel += random.randint(-2, 2)
         else:
