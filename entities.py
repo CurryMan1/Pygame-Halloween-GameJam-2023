@@ -48,7 +48,7 @@ class Player(Entity):
         super().__init__(x, y, images[self.img_no])
 
         #(changeable) stats
-        self.damage = 5
+        self.damage = 10
         self.shooting_delay = 20
 
         self.images = images
@@ -59,6 +59,7 @@ class Player(Entity):
         self.x_vel, self.y_vel = 0, 0
 
         self.on_cooldown = False
+        self.hp = 1500
 
     def update(self, mousex):
         self.x_vel *= self.WATER_RESISTANCE
@@ -84,6 +85,7 @@ class Player(Entity):
 
     def hit(self, damage):
         self.hp -= damage
+        self.on_cooldown = True
 
 class Anchor(Entity):
     SPEED = 30
@@ -103,7 +105,7 @@ class Anchor(Entity):
                 x, y = mouse_pos
                 pos = pygame.math.Vector2(x, y) - self.rect.center
             else:
-                x, y = WIDTH / 2, HEIGHT / 2
+                x, y = CENTER
                 pos = self.rect.center - pygame.math.Vector2(x, y)
 
             self.angle = pos.angle_to((0, 0))
@@ -114,14 +116,12 @@ class Anchor(Entity):
             #vel
             self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
 
+        elif calculate_hypot(CENTER, self.rect.center) >= 400: #checks if length of wire is over 400
+            self.mode = 'return'
+
         if self.mode != 'still':
             self.rect.x += self.x_vel+player_x_vel
             self.rect.y += self.y_vel+player_y_vel
-
-        if self.get_bound():
-            self.mode = 'return'
-            self.x_vel *= -1
-            self.y_vel *= -1
 
     def get_bound(self, bound=0):
         return self.rect.top < 0 or\
@@ -132,6 +132,7 @@ class Anchor(Entity):
 class Enemy(Entity):
     SPEED = 10
     WATER_RESISTANCE = 0.95
+    DAMAGE = 10
     ANIMATION_DELAY = 5
     KB = 7
 
@@ -168,7 +169,7 @@ class Enemy(Entity):
         self.og_img = self.images[self.animation_count//self.ANIMATION_DELAY]
 
         #rotate towards player
-        x, y = WIDTH / 2, HEIGHT / 2
+        x, y = CENTER
         pos = pygame.math.Vector2(x, y) - self.rect.center
         self.angle = pos.angle_to((0, 0))
         self.image = pygame.transform.rotate(self.og_img, self.angle-90)
@@ -194,8 +195,7 @@ class Enemy(Entity):
         self.x_vel *= self.WATER_RESISTANCE
         self.y_vel *= self.WATER_RESISTANCE
 
-        self.rect.x += self.x_vel + player_x_vel
-        self.rect.y += self.y_vel + player_y_vel
+        self.move(self.x_vel + player_x_vel, self.y_vel + player_y_vel)
 
         #dead?
         if self.healthbar.hp <= 0:
@@ -208,6 +208,43 @@ class Enemy(Entity):
     def hit(self, damage):
         self.healthbar.hp -= damage
         self.tint = 255
+
+    def move(self, x, y):
+        self.rect.x += x
+        self.rect.y += y
+
+class PlasmaEnemy(Enemy):
+    SHOOTING_DELAY = 120
+    SHOOTING_SPEED = 20
+    KB = 14
+
+    def __init__(self, images):
+        super().__init__(images)
+        self.last_shot = self.SHOOTING_DELAY
+
+    def update(self, player_x_vel, player_y_vel):
+        if self.last_shot < self.SHOOTING_DELAY:
+            self.last_shot += 1
+
+        return super().update(player_x_vel, player_y_vel)
+
+class PlasmaBall(Entity):
+    BOUND = 3000
+    KB = 7
+
+    def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface = None):
+        image = pygame.surface.Surface((30, 30), pygame.SRCALPHA)
+        pygame.draw.circle(image, BLACK, (15, 15), 15)
+        super().__init__(x, y, image)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.x_vel, self.y_vel = x_vel, y_vel
+
+    def update(self, player_x_vel, player_y_vel):
+        self.rect.centerx += self.x_vel + player_x_vel
+        self.rect.centery += self.y_vel + player_y_vel
+
+        if self.get_bound(self.BOUND):
+            return True
 
 class Heart(Entity):
     BOUND = 3000

@@ -14,18 +14,19 @@ CLOCK = pygame.time.Clock()
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 DISPLAY = pygame.surface.Surface((WIDTH, HEIGHT))
 
-pygame.display.set_caption('Thalassophobia')
+pygame.display.set_caption('Anchor')
 
 class Game:
     def __init__(self):
         images = load_imgs('sub', True, 0.6)
         #main sprites
-        self.player = Player(WIDTH/2, HEIGHT/2, images)
-        self.anchor = Anchor(*self.player.rect.center, load_img('anchor.png', True, 0.25))
+        self.player = Player(*CENTER, images)
+        self.anchor = Anchor(*CENTER, load_img('anchor.png', True, 0.25))
 
         #group
         self.enemy_group = []
         self.heart_group = []
+        self.projectile_group = []
 
         #particles
         #[pos, velocity, timer, speed, colour]
@@ -45,6 +46,7 @@ class Game:
         self.crosshair = load_img('crosshair.png', True, 3)
         self.overlay = load_img('overlay.png', True)
         self.hearts = 0
+        self.screen_shake = 0
 
         self.main()
 
@@ -53,7 +55,6 @@ class Game:
         e = Enemy(load_imgs('squid', True, 0.7))
 
         self.enemy_group.append(e)
-        screen_shake = 0
         #game loop
         while True:
             CLOCK.tick(FPS)
@@ -79,7 +80,7 @@ class Game:
             if keys[pygame.K_SPACE] or mouse_btns[2]:
                 if not self.player.on_cooldown:
                     self.player.x_vel, self.player.y_vel =\
-                        calculate_kb(self.player.rect.center, mouse_pos, self.player.SPEED)
+                        calculate_kb(CENTER, mouse_pos, self.player.SPEED)
                     self.player.og_img = self.player.image
 
             player_x_vel, player_y_vel = self.player.x_vel, self.player.y_vel
@@ -116,12 +117,19 @@ class Game:
                 particle[0][1] += particle[1][1] + player_y_vel
                 particle[2] -= particle[3]
 
-                pygame.draw.circle(DISPLAY, WHITE,
-                                   particle[0], particle[2] + 1)
-                pygame.draw.circle(DISPLAY, particle[4],
-                                   particle[0], particle[2])
+                #outline
+                pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
+                #main particle
+                pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
                 if particle[2] <= 0:
                     self.particles.remove(particle)
+
+
+            #projectile_group
+            for projectile in self.projectile_group:
+                if projectile.update(player_x_vel, player_y_vel):
+                    self.projectile_group.remove(projectile)
+                projectile.draw(DISPLAY)
 
             #heart_group
             for heart in self.heart_group:
@@ -131,20 +139,25 @@ class Game:
                 heart.draw(DISPLAY)
 
             #anchor line
-            pygame.draw.line(DISPLAY, DARK_GREY, self.anchor.rect.center, self.player.rect.center, 5)
+            pygame.draw.line(DISPLAY, DARK_GREY, self.anchor.rect.center, CENTER, 5)
 
             #enemy_group
             for enemy in self.enemy_group:
                 if enemy.update(player_x_vel, player_y_vel):
                     self.enemy_group.remove(enemy)
                     self.add_hearts(enemy.rect.center, 5, 5)
+                if hasattr(enemy, 'last_shot'):
+                    if enemy.last_shot == enemy.SHOOTING_DELAY:
+                        pball = PlasmaBall(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED))
+                        self.projectile_group.append(pball)
+                        enemy.last_shot = 0
                 enemy.draw(DISPLAY)
 
             #player
             self.player.update(mouse_pos[0])
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
-                               1, 10, 10, 0.1, [BUBBLE_BLUE])
+                               1, 14, 10, 0.15, [BUBBLE_BLUE])
 
             #anchor
             self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
@@ -166,11 +179,11 @@ class Game:
                 #player-anchor
                 if pygame.sprite.spritecollideany(self.player, [self.anchor], pygame.sprite.collide_mask):
                     self.anchor.mode = 'still'
-                    self.anchor.rect.center = self.player.rect.center
+                    self.anchor.rect.center = CENTER
             if self.anchor.mode != 'still':
                 #anchor-enemy_group
                 for enemy in pygame.sprite.spritecollide(self.anchor, self.enemy_group, False, pygame.sprite.collide_mask):
-                    enemy.hit(10)
+                    enemy.hit(self.player.damage)
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
                     self.anchor.mode = 'return'
@@ -180,15 +193,15 @@ class Game:
                 self.hearts += 1
 
             #player-enemy_group
-            collided_enemies = pygame.sprite.spritecollide(self.player, self.enemy_group, False, pygame.sprite.collide_mask)
-            if collided_enemies:
-                self.player.x_vel, self.player.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, enemy.KB)
-                self.player.on_cooldown = True
-                self.player.tint = 255
-                screen_shake = 20
-            for enemy in collided_enemies:
-                enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.player.rect.center, enemy.KB)
+            for enemy in pygame.sprite.spritecollide(self.player, self.enemy_group, False, pygame.sprite.collide_mask):
+                enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, CENTER, enemy.KB)
                 enemy.on_cooldown = True
+                self.hit_player(enemy)
+
+            #player-projectile_group
+            for projectile in pygame.sprite.spritecollide(self.player, self.projectile_group, False, pygame.sprite.collide_mask):
+                self.projectile_group.remove(projectile)
+                self.hit_player(projectile)
 
             #player-heart
             for heart in pygame.sprite.spritecollide(self.player, self.heart_group, False, pygame.sprite.collide_mask):
@@ -202,13 +215,18 @@ class Game:
                     sys.exit()
 
             screen_offset = [0, 0]
-            if screen_shake > 0:
+            if self.screen_shake > 0:
                 screen_offset = [random.randint(-4, 4), random.randint(-4, 4)]
-                screen_shake -= 1
+                self.screen_shake -= 1
 
             SCREEN.blit(DISPLAY, screen_offset)
 
             pygame.display.update()
+
+    def hit_player(self, sprite):
+        self.player.x_vel, self.player.y_vel = calculate_kb(sprite.rect.center, CENTER, sprite.KB / 2)
+        self.player.hit(Enemy.DAMAGE)
+        self.screen_shake = 20
 
     def add_particles(self, pos, number, size, vel, speed, colours):
         for i in range(number):

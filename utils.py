@@ -1,8 +1,10 @@
 import pygame
+from math import sin, sqrt
 from os import listdir
 
 WIDTH, HEIGHT = 1500, 900
-TINT_FADE = 25
+CENTER = (WIDTH/2, HEIGHT/2)
+TINT_FADE = 15
 
 #colour
 WHITE = (255, 255, 255)
@@ -68,3 +70,7 @@ def calculate_kb(pos1, pos2, power):
     base = power/total if total else 0
 
     return base*x, base*y
+
+def calculate_hypot(pos1, pos2):
+    x, y = pos1[0] - pos2[0], pos1[1] - pos2[1]
+    return sqrt(x**2 + y**2)
