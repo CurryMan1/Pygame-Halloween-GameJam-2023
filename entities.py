@@ -144,11 +144,11 @@ class Enemy(Entity):
         h = image.get_height()
 
         if random.random() > 0.5:
-            x = random.choice([-w, WIDTH+w])
-            y = random.randint(-h, HEIGHT+h)
+            x = random.choice([-w-200, WIDTH+w])
+            y = random.randint(-h-200, HEIGHT+h)
         else:
-            x = random.randint(-w, WIDTH + w)
-            y = random.choice([-h, HEIGHT + h])
+            x = random.randint(-w-200, WIDTH + w+200)
+            y = random.choice([-h-200, HEIGHT + h+200])
 
         super().__init__(x, y, image)
         self.og_img = self.image

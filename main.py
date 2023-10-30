@@ -1,10 +1,8 @@
 #modules
-import pygame
 import sys
 from math import ceil
 #files
 from entities import *
-from utils import *
 
 pygame.init()
 pygame.mouse.set_visible(False)
@@ -45,16 +43,23 @@ class Game:
         #other
         self.crosshair = load_img('crosshair.png', True, 3)
         self.overlay = load_img('overlay.png', True)
+
+        #game vars
         self.hearts = 0
         self.screen_shake = 0
+        self.enemy_delay = 240
+        self.last_enemy = self.enemy_delay
 
+        ###########
         self.main()
 
     def main(self):
         clicked = False
-        e = Enemy(load_imgs('squid', True, 0.7))
 
-        self.enemy_group.append(e)
+        for i in range(3):
+            e = random.choice([Enemy(load_imgs('squid', True, 0.7)), PlasmaEnemy(load_imgs('squid', True, 0.7))])
+            self.enemy_group.append(e)
+
         #game loop
         while True:
             CLOCK.tick(FPS)
@@ -81,6 +86,7 @@ class Game:
                 if not self.player.on_cooldown:
                     self.player.x_vel, self.player.y_vel =\
                         calculate_kb(CENTER, mouse_pos, self.player.SPEED)
+
                     self.player.og_img = self.player.image
 
             player_x_vel, player_y_vel = self.player.x_vel, self.player.y_vel
@@ -145,7 +151,7 @@ class Game:
             for enemy in self.enemy_group:
                 if enemy.update(player_x_vel, player_y_vel):
                     self.enemy_group.remove(enemy)
-                    self.add_hearts(enemy.rect.center, 5, 5)
+                    self.add_hearts(enemy.rect.center, random.randint(2, 6))
                 if hasattr(enemy, 'last_shot'):
                     if enemy.last_shot == enemy.SHOOTING_DELAY:
                         pball = PlasmaBall(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED))
@@ -234,9 +240,9 @@ class Game:
                 [list(pos), [random.randrange(vel) / 10 - vel/20, random.randrange(vel) / 10 - vel/20],
                  random.randrange(size), speed, random.choice(colours)])
 
-    def add_hearts(self, pos, number, max_vel):
+    def add_hearts(self, pos, number):
         for i in range(number):
-            heart = Heart(pos[0], pos[1], max_vel)
+            heart = Heart(pos[0], pos[1], 5)
             self.heart_group.append(heart)
 
 if __name__ == '__main__':
