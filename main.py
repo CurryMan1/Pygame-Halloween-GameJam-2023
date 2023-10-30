@@ -124,8 +124,9 @@ class Game:
                 particle[0][1] += particle[1][1] + player_y_vel
                 particle[2] -= particle[3]
 
-                #outline
-                pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
+                if particle[5] == 'bubble':
+                    #outline
+                    pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
                 #main particle
                 pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
                 if particle[2] <= 0:
@@ -164,7 +165,7 @@ class Game:
             self.player.update(mouse_pos[0])
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
-                               1, 14, 10, 0.15, [BUBBLE_BLUE])
+                               1, 14, 10, 0.15, [BUBBLE_BLUE], 'bubble')
 
             #anchor
             self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
@@ -212,6 +213,7 @@ class Game:
             for projectile in pygame.sprite.spritecollide(self.player, self.projectile_group, False, pygame.sprite.collide_mask):
                 self.projectile_group.remove(projectile)
                 self.hit_player(projectile)
+                self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [BUBBLE_BLUE, WHITE], 'plasma')
 
             #player-heart
             for heart in pygame.sprite.spritecollide(self.player, self.heart_group, False, pygame.sprite.collide_mask):
@@ -238,11 +240,11 @@ class Game:
         self.player.hit(Enemy.DAMAGE)
         self.screen_shake = 20
 
-    def add_particles(self, pos, number, size, vel, speed, colours):
+    def add_particles(self, pos, number, size, vel, speed, colours, tag):
         for i in range(number):
             self.particles.append(
                 [list(pos), [random.randrange(vel) / 10 - vel/20, random.randrange(vel) / 10 - vel/20],
-                 random.randrange(size), speed, random.choice(colours)])
+                 random.randrange(size), speed, random.choice(colours), tag])
 
     def add_hearts(self, pos, number):
         for i in range(number):
