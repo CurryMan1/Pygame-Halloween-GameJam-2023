@@ -43,6 +43,7 @@ class Game:
         #other
         self.crosshair = load_img('crosshair.png', True, 3)
         self.overlay = load_img('overlay.png', True)
+        self.plasmaball_img = load_img('plasmaball.png', True, 0.1)
 
         #game vars
         self.hearts = 0
@@ -154,7 +155,7 @@ class Game:
                     self.add_hearts(enemy.rect.center, random.randint(2, 6))
                 if hasattr(enemy, 'last_shot'):
                     if enemy.last_shot == enemy.SHOOTING_DELAY:
-                        pball = PlasmaBall(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED))
+                        pball = PlasmaBall(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED), self.plasmaball_img)
                         self.projectile_group.append(pball)
                         enemy.last_shot = 0
                 enemy.draw(DISPLAY)
@@ -193,6 +194,9 @@ class Game:
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
                     self.anchor.mode = 'return'
+                #anchor-projectile_group
+                for projectile in pygame.sprite.spritecollide(self.anchor, self.projectile_group, False, pygame.sprite.collide_mask):
+                    projectile.x_vel, projectile.y_vel = calculate_kb(projectile.rect.center, self.anchor.rect.center, projectile.speed)
             #anchor-heart
             for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
                 self.heart_group.remove(heart)

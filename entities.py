@@ -233,11 +233,10 @@ class PlasmaBall(Entity):
     KB = 7
 
     def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface = None):
-        image = pygame.surface.Surface((30, 30), pygame.SRCALPHA)
-        pygame.draw.circle(image, BLACK, (15, 15), 15)
         super().__init__(x, y, image)
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = x_vel, y_vel
+        self.speed = x_vel+y_vel
 
     def update(self, player_x_vel, player_y_vel):
         self.rect.centerx += self.x_vel + player_x_vel
