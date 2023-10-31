@@ -51,10 +51,15 @@ class Button:
 class UpgradeButton(Button):
     def __init__(self, x, y, text, price):
         image = get_box(200, 200, 2, DARK_GREY, LIGHT_GREY)
-        super().__init__(x, y, text=text, text_size=20, text_colour=BLACK, image=image, draw_text=False)
+        super().__init__(x, y, text=text, text_size=25, text_colour=WHITE, image=image, draw_text=False)
         self.price = price
+        self.heart_img = load_img('heart.png', True, 1.2)
 
     def is_clicked(self, surf):
         clicked = super().is_clicked(surf)
-        draw_text(self.text, PIXEL_FONT, self.text_colour, self.rect.centerx, self.rect.centery, self.text_size, surf, True)
+        draw_text(self.text, PIXEL_FONT, self.text_colour, self.rect.centerx, self.rect.top+20, self.text_size, surf, True)
+        draw_text(str(self.price), PIXEL_FONT, self.text_colour, self.rect.left+40, self.rect.centery+10, 50, surf, True)
+
+        surf.blit(self.heart_img, (self.rect.centerx+10, self.rect.centery-35))
+
         return clicked

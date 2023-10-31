@@ -6,7 +6,13 @@ from entities import *
 from ui import *
 
 pygame.init()
+pygame.mixer.init()
 pygame.mouse.set_visible(False)
+
+#theme
+pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.load('assets/sound/theme.wav')
+pygame.mixer.music.play(-1)
 
 FPS = 60
 CLOCK = pygame.time.Clock()
@@ -19,7 +25,7 @@ class Game:
     def __init__(self):
         images = load_imgs('sub', True, 0.6)
         #main sprites
-        self.player = Player(*CENTER, images)
+        self.player = Player(*CENTER, images, load_img('shield.png', True, 0.5))
         self.anchor = Anchor(*CENTER, load_img('anchor.png', True, 0.25))
 
         #group
@@ -43,7 +49,7 @@ class Game:
                 self.bg_tile_group.append([(x - 1) * self.bg_w, (y - 1) * self.bg_h, self.bg]) #randomise stars
 
         #upgrade buttons
-        upgrade_btn_tags = ['sheild', 'torpedo', 'quad damage']
+        upgrade_btn_tags = ['shield', 'torpedo', 'quad damage']
 
         for i, tag in enumerate(upgrade_btn_tags):
             u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag, 50)
@@ -178,7 +184,7 @@ class Game:
             self.player.update(mouse_pos[0])
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
-                               1, 14, 10, 0.15, [BUBBLE_BLUE], 'bubble')
+                               1, 14, 10, 0.3, [BUBBLE_BLUE], 'bubble')
 
             #anchor
             self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
@@ -196,7 +202,8 @@ class Game:
             #upgrade buttons
             for button in self.upgrade_button_group:
                 if button.is_clicked(DISPLAY):
-                    print('clicked')
+                    if button.text == 'shield':
+                        pass
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
@@ -235,7 +242,7 @@ class Game:
             for projectile in pygame.sprite.spritecollide(self.player, self.projectile_group, False, pygame.sprite.collide_mask):
                 self.projectile_group.remove(projectile)
                 self.hit_player(projectile)
-                self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [BUBBLE_BLUE, WHITE], 'plasma')
+                self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, WHITE], 'plasma')
 
             #player-heart
             for heart in pygame.sprite.spritecollide(self.player, self.heart_group, False, pygame.sprite.collide_mask):

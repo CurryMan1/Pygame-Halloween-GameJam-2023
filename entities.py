@@ -39,11 +39,20 @@ class Entity(pygame.sprite.Sprite):
         return self.rect.centerx not in range(-bound, WIDTH + bound
             ) or self.rect.centery not in range(-bound, HEIGHT + bound)
 
+class Shield(Entity):
+    def __init__(self, image):
+        super().__init__(*CENTER, image)
+        self.enabled = 0
+        self.hp = 50
+
+    def toggle(self):
+        self.enabled = 1-self.enabled
+
 class Player(Entity):
     SPEED = 12
     WATER_RESISTANCE = 0.95 #for timesing
 
-    def __init__(self, x: int, y: int, images: list):
+    def __init__(self, x: int, y: int, images: list, shield_img: pygame.surface.Surface):
         self.img_no = 0
         super().__init__(x, y, images[self.img_no])
 
@@ -60,6 +69,8 @@ class Player(Entity):
 
         self.on_cooldown = False
         self.hp = 1500
+
+        self.shield = Shield(shield_img)
 
     def update(self, mousex):
         self.x_vel *= self.WATER_RESISTANCE
@@ -86,6 +97,9 @@ class Player(Entity):
     def hit(self, damage):
         self.hp -= damage
         self.on_cooldown = True
+
+    # def draw(self, disp: pygame.surface.Surface):
+    #     pass
 
 class Anchor(Entity):
     SPEED = 30
@@ -219,6 +233,7 @@ class Enemy(Entity):
 class PlasmaEnemy(Enemy):
     SHOOTING_DELAY = 120
     SHOOTING_SPEED = 20
+    SPEED = 8
     KB = 14
 
     def __init__(self, images):
