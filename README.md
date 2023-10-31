@@ -2,53 +2,44 @@
 Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 [How To Play](#HowToPlay)
+
 [Controls](#Controls)
+
+[Creators](#Creators)
+
+
 
 
 
 <a name="HowToPlay" />
 
-### How to play
+## How to play
 
-The aim of the game is to survive as long as possible.
+The aim of the game is to survive as long as possible. 
+
 You must avoid all the enemies.
 
 
 <a name="Controls" />
 
-### Controls
+## Controls 
 
-Left Click: Shoot Anchor in direction of cursor
+Left Click: Shoot Anchor in direction of cursor.
 
-Space/Right Click: Drive Sub in direction of cursor
+Space/Right Click: Drive Sub in direction of cursor.
 
+<a name="Creators" />
 
+## Creators 
 
+### Lead Dev 
+CurryMan1 (bigcurryman69)
 
-# Read Me
+### Art & Code 
+DumbMonkeyTm (dumbmonkeytm)
 
-## Table Of Contents
+### Code 
+mutleyboy99 (mutleyboy99)
 
-
-
-
-
-## Theme
-
-### Thalassophobia
-
-Thalassophobia means the fear of water!
-
-
-### Persued
-
-You are being chased the entire time
-
-<a name="#Controls" />
-
-## Controls:
-Left Click: Shoot Anchor in direction of cursor
-
-Right Click: Drive Sub in direction of cursor
-
-
+### Sound & Music 
+joe (hitechmcdonalds)
