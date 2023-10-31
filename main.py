@@ -3,6 +3,7 @@ import sys
 from math import ceil
 #files
 from entities import *
+from ui import *
 
 pygame.init()
 pygame.mouse.set_visible(False)
@@ -25,6 +26,8 @@ class Game:
         self.enemy_group = []
         self.heart_group = []
         self.projectile_group = []
+        self.upgrade_button_group = []
+        self.bg_tile_group = []
 
         #particles
         #[pos, velocity, timer, speed, colour]
@@ -32,13 +35,19 @@ class Game:
 
         #bg
         self.bg = load_img('ocean.png', False, 15)
-        self.bg_tiles = []
         self.bg_w, self.bg_h = self.bg.get_rect().size
         self.bg_dimensions = [ceil(WIDTH / self.bg_w) + 1, ceil(HEIGHT / self.bg_h) + 1]  #0 is x, 1 is y
 
         for x in range(self.bg_dimensions[0]):
             for y in range(self.bg_dimensions[1]):
-                self.bg_tiles.append([(x-1)*self.bg_w, (y-1)*self.bg_h, self.bg]) #randomise stars
+                self.bg_tile_group.append([(x - 1) * self.bg_w, (y - 1) * self.bg_h, self.bg]) #randomise stars
+
+        #upgrade buttons
+        upgrade_btn_tags = ['sheild', 'torpedo', 'quad damage']
+
+        for i, tag in enumerate(upgrade_btn_tags):
+            u_btn = UpgradeButton(i*210, HEIGHT-210, tag)
+            self.upgrade_button_group.append(u_btn)
 
         #other
         self.crosshair = load_img('crosshair.png', True, 3)
@@ -95,7 +104,7 @@ class Game:
             #DRAW AND UPDATE
             #bg
             DISPLAY.fill((0, 0, 0))
-            for i, coords_and_bg in enumerate(self.bg_tiles): #bg_tiles
+            for i, coords_and_bg in enumerate(self.bg_tile_group): #bg_tile_group
                 x, y, bg = coords_and_bg
 
                 diff_x = x - WIDTH
@@ -114,7 +123,7 @@ class Game:
                     diff_y = y - (HEIGHT - (self.bg_dimensions[1] * self.bg_h))
                     y = HEIGHT + diff_y
 
-                self.bg_tiles[i] = [x + player_x_vel, y + player_y_vel, bg]
+                self.bg_tile_group[i] = [x + player_x_vel, y + player_y_vel, bg]
 
                 DISPLAY.blit(bg, (x, y))
 
@@ -178,6 +187,13 @@ class Game:
             #hearts
             draw_text(str(self.hearts), PIXEL_FONT, 'pink', 10, 5, 50, DISPLAY)
 
+            #buttons
+
+            #upgrade buttons
+            for button in self.upgrade_button_group:
+                if button.is_clicked(DISPLAY):
+                    print('clicked')
+
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
 
@@ -188,6 +204,10 @@ class Game:
                 if pygame.sprite.spritecollideany(self.player, [self.anchor], pygame.sprite.collide_mask):
                     self.anchor.mode = 'still'
                     self.anchor.rect.center = CENTER
+            if self.anchor.mode == 'away':
+                #anchor-projectile_group
+                for projectile in pygame.sprite.spritecollide(self.anchor, self.projectile_group, False, pygame.sprite.collide_mask):
+                    projectile.x_vel, projectile.y_vel = calculate_kb(projectile.rect.center, self.anchor.rect.center, projectile.speed)
             if self.anchor.mode != 'still':
                 #anchor-enemy_group
                 for enemy in pygame.sprite.spritecollide(self.anchor, self.enemy_group, False, pygame.sprite.collide_mask):
@@ -195,9 +215,7 @@ class Game:
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
                     self.anchor.mode = 'return'
-                #anchor-projectile_group
-                for projectile in pygame.sprite.spritecollide(self.anchor, self.projectile_group, False, pygame.sprite.collide_mask):
-                    projectile.x_vel, projectile.y_vel = calculate_kb(projectile.rect.center, self.anchor.rect.center, projectile.speed)
+
             #anchor-heart
             for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
                 self.heart_group.remove(heart)
