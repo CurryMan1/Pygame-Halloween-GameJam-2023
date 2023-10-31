@@ -35,7 +35,7 @@ Space/Right Click: Drive Sub in direction of cursor.
 ### Lead Dev 
 **CurryMan1** (bigcurryman69)
 
-### Art & Code 
+### Artist 
 **DumbMonkeyTm** (dumbmonkeytm)
 
 ### Code 
