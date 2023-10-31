@@ -43,10 +43,18 @@ class Shield(Entity):
     def __init__(self, image):
         super().__init__(*CENTER, image)
         self.enabled = 0
-        self.hp = 50
+        self.hp = 0
 
     def toggle(self):
         self.enabled = 1-self.enabled
+        self.hp = 200
+
+    def hit(self, damage):
+        self.hp -= damage
+        if self.hp <= 0:
+            self.toggle()
+            self.hp = 0
+            return True
 
 class Player(Entity):
     SPEED = 12
@@ -98,8 +106,13 @@ class Player(Entity):
         self.hp -= damage
         self.on_cooldown = True
 
-    # def draw(self, disp: pygame.surface.Surface):
-    #     pass
+        if self.hp <= 0:
+            return True
+
+    def draw(self, disp):
+        super().draw(disp)
+        if self.shield.enabled:
+            self.shield.draw(disp)
 
 class Anchor(Entity):
     SPEED = 30
@@ -146,9 +159,9 @@ class Anchor(Entity):
 class Enemy(Entity):
     SPEED = 10
     WATER_RESISTANCE = 0.95
-    DAMAGE = 10
+    DAMAGE = 5
     ANIMATION_DELAY = 5
-    KB = 7
+    KB = 8
 
     def __init__(self, images):
         self.images = images
@@ -218,8 +231,8 @@ class Enemy(Entity):
         if self.healthbar.hp <= 0:
             return True
 
-    def draw(self, disp: pygame.surface.Surface):
-        disp.blit(self.image, self.rect.topleft)
+    def draw(self, disp):
+        super().draw(disp)
         self.healthbar.draw(disp, self.rect.center)
 
     def hit(self, damage):
@@ -234,7 +247,7 @@ class PlasmaEnemy(Enemy):
     SHOOTING_DELAY = 120
     SHOOTING_SPEED = 20
     SPEED = 8
-    KB = 14
+    KB = 10
 
     def __init__(self, images):
         super().__init__(images)
@@ -249,6 +262,7 @@ class PlasmaEnemy(Enemy):
 class PlasmaBall(Entity):
     BOUND = 3000
     KB = 7
+    DAMAGE = 10
 
     def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface = None):
         super().__init__(x, y, image)

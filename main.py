@@ -23,9 +23,8 @@ pygame.display.set_caption('Anchor')
 
 class Game:
     def __init__(self):
-        images = load_imgs('sub', True, 0.6)
         #main sprites
-        self.player = Player(*CENTER, images, load_img('shield.png', True, 0.5))
+        self.player = Player(*CENTER, load_imgs('sub', True, 0.6), load_img('shield.png', True, 0.6))
         self.anchor = Anchor(*CENTER, load_img('anchor.png', True, 0.25))
 
         #group
@@ -198,12 +197,13 @@ class Game:
             draw_text(str(self.hearts), PIXEL_FONT, 'pink', 10, 5, 50, DISPLAY)
 
             #buttons
-
             #upgrade buttons
             for button in self.upgrade_button_group:
                 if button.is_clicked(DISPLAY):
+                    #if self.hearts > button.price:
                     if button.text == 'shield':
-                        pass
+                        if not self.player.shield.enabled:
+                            self.player.shield.toggle()
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
@@ -249,6 +249,21 @@ class Game:
                 self.heart_group.remove(heart)
                 self.hearts += 1
 
+            if self.player.shield.enabled:
+                #player.shield-enemy_group
+                for enemy in pygame.sprite.spritecollide(self.player.shield, self.enemy_group, False, pygame.sprite.collide_mask):
+                    enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, CENTER, enemy.KB*2)
+                    enemy.on_cooldown = True
+                    if self.player.shield.hit(enemy.DAMAGE):
+                        self.add_particles(CENTER, 50, 20, 140, 0.15, [BUBBLE_BLUE, WHITE], 'shield')
+
+                #player.shield-projectile_group
+                for projectile in pygame.sprite.spritecollide(self.player.shield, self.projectile_group, False, pygame.sprite.collide_mask):
+                    self.projectile_group.remove(projectile)
+                    self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, WHITE], 'plasma')
+                    if self.player.shield.hit(projectile.DAMAGE):
+                        self.add_particles(CENTER, 50, 20, 140, 0.15, [BUBBLE_BLUE, WHITE], 'shield')
+
             ####################################
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -266,7 +281,7 @@ class Game:
 
     def hit_player(self, sprite):
         self.player.x_vel, self.player.y_vel = calculate_kb(sprite.rect.center, CENTER, sprite.KB / 2)
-        self.player.hit(Enemy.DAMAGE)
+        self.player.hit(sprite.DAMAGE)
         self.screen_shake = 20
 
     def add_particles(self, pos, number, size, vel, speed, colours, tag):
