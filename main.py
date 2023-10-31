@@ -46,7 +46,7 @@ class Game:
         upgrade_btn_tags = ['sheild', 'torpedo', 'quad damage']
 
         for i, tag in enumerate(upgrade_btn_tags):
-            u_btn = UpgradeButton(i*210, HEIGHT-210, tag)
+            u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag)
             self.upgrade_button_group.append(u_btn)
 
         #other
