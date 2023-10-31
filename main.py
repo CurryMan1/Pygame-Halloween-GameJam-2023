@@ -10,9 +10,9 @@ pygame.mixer.init()
 pygame.mouse.set_visible(False)
 
 #theme
-pygame.mixer.music.set_volume(0.1)
-pygame.mixer.music.load('assets/sound/theme.wav')
-pygame.mixer.music.play(-1)
+# pygame.mixer.music.set_volume(0.1)
+# pygame.mixer.music.load('assets/sound/theme.wav')
+# pygame.mixer.music.play(-1)
 
 FPS = 60
 CLOCK = pygame.time.Clock()
@@ -25,7 +25,7 @@ class Game:
     def __init__(self):
         #main sprites
         self.player = Player(*CENTER, load_imgs('sub', True, 0.6), load_img('shield.png', True, 0.6))
-        self.anchor = Anchor(*CENTER, load_img('anchor.png', True, 0.25))
+        self.anchor = Anchor(*CENTER, [load_img('anchor.png', True, 0.25), load_img('torpedo.png', True, 0.6)])
 
         #group
         self.enemy_group = []
@@ -34,9 +34,11 @@ class Game:
         self.upgrade_button_group = []
         self.bg_tile_group = []
 
-        #particles
+        #effects
         #[pos, velocity, timer, speed, colour]
         self.particles = []
+        #[text, opacity, x, y]
+        self.splash_texts = []
 
         #bg
         self.bg = load_img('ocean.png', False, 15)
@@ -74,8 +76,9 @@ class Game:
 
     def main(self):
         clicked = False
+        can_shoot_torpedo = False
 
-        for i in range(3):
+        for i in range(10):
             e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
             self.enemy_group.append(e)
 
@@ -88,18 +91,24 @@ class Game:
             mouse_btns = pygame.mouse.get_pressed()
             keys = pygame.key.get_pressed()
 
-            #throw anchor?
+            #throw anchor/torpedo?
             if mouse_btns[0]:
                 if not clicked:
-                    if self.anchor.mode == 'still':
-                        self.anchor.mode = 'away'
-                        self.anchor.x_vel, self.anchor.y_vel = calculate_kb(mouse_pos, self.anchor.rect.center,
-                                                                            self.anchor.SPEED)
-                    elif self.anchor.mode == 'away':
-                        self.anchor.mode = 'return'
+                    if not self.anchor.torpedo_enabled:
+                        if self.anchor.mode == 'still':
+                            self.anchor.mode = 'away'
+                            self.anchor.x_vel, self.anchor.y_vel = calculate_kb(mouse_pos, CENTER,
+                                                                                self.anchor.SPEED)
+                        elif self.anchor.mode == 'away':
+                            self.anchor.mode = 'return'
+                    else:
+                        torpedo = Projectile(*CENTER, *calculate_kb(mouse_pos, CENTER, self.anchor.SPEED), self.anchor.image, 'torpedo')
+                        self.projectile_group.append(torpedo)
+                        self.anchor.torpedo_enabled = False
                 clicked = True
             else:
                 clicked = False
+
 
             if keys[pygame.K_SPACE] or mouse_btns[2]:
                 if not self.player.on_cooldown:
@@ -145,17 +154,16 @@ class Game:
                 if particle[5] == 'bubble':
                     #outline
                     pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
+
+                elif particle[5] == 'torpedo':
+                    collision_rect = pygame.rect.Rect(particle[0][0]-particle[2], particle[0][1]-particle[2], particle[2]*2, particle[2]*2)
+                    for enemy in collision_rect.collideobjectsall(self.enemy_group):
+                        enemy.hit(100)
+
                 #main particle
                 pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
                 if particle[2] <= 0:
                     self.particles.remove(particle)
-
-
-            #projectile_group
-            for projectile in self.projectile_group:
-                if projectile.update(player_x_vel, player_y_vel):
-                    self.projectile_group.remove(projectile)
-                projectile.draw(DISPLAY)
 
             #heart_group
             for heart in self.heart_group:
@@ -174,7 +182,7 @@ class Game:
                     self.add_hearts(enemy.rect.center, random.randint(2, 6))
                 if hasattr(enemy, 'last_shot'):
                     if enemy.last_shot == enemy.SHOOTING_DELAY:
-                        pball = PlasmaBall(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED), self.plasmaball_img)
+                        pball = Projectile(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED), self.plasmaball_img, 'plasmaball')
                         self.projectile_group.append(pball)
                         enemy.last_shot = 0
                 enemy.draw(DISPLAY)
@@ -189,21 +197,44 @@ class Game:
             self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
             self.anchor.draw(DISPLAY)
 
+            #projectile_group
+            for projectile in self.projectile_group:
+                if projectile.update(player_x_vel, player_y_vel):
+                    self.projectile_group.remove(projectile)
+                projectile.draw(DISPLAY)
+
             #overlay
             DISPLAY.blit(self.overlay, (0, 0))
 
             #UI
-            #hearts
-            draw_text(str(self.hearts), PIXEL_FONT, 'pink', 10, 5, 50, DISPLAY)
+            #no_of_hearts
+            DISPLAY.blit(self.heart_img, (10, 10))
+            draw_text(str(self.hearts), PIXEL_FONT, 'pink', self.heart_img.get_width()+10, 5, 50, DISPLAY)
 
             #buttons
             #upgrade buttons
-            for button in self.upgrade_button_group:
-                if button.is_clicked(DISPLAY):
-                    #if self.hearts > button.price:
-                    if button.text == 'shield':
-                        if not self.player.shield.enabled:
-                            self.player.shield.toggle()
+            if keys[pygame.K_TAB]:
+                for button in self.upgrade_button_group:
+                    if button.is_clicked(DISPLAY):
+                        self.splash_texts.append([f'-{button.price}', 256, *mouse_pos, RED])
+                        #if self.hearts > button.price:
+                        if button.text == 'shield':
+                            if not self.player.shield.enabled:
+                                self.player.shield.toggle()
+                        elif button.text == 'torpedo':
+                            self.anchor.torpedo_enabled = True
+                            self.anchor.mode = 'still'
+                            self.anchor.x_vel, self.anchor.y_vel = 0,0
+
+            #splash_texts
+            for sp_text in self.splash_texts:
+                text, opacity, x, y, colour = sp_text
+                sp_text[1] -= 10
+
+                draw_text(text, PIXEL_FONT, colour, x, y, 50, DISPLAY, True, opacity)
+                if opacity <= 0:
+                    self.splash_texts.remove(sp_text)
+
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
@@ -218,7 +249,8 @@ class Game:
             if self.anchor.mode == 'away':
                 #anchor-projectile_group
                 for projectile in pygame.sprite.spritecollide(self.anchor, self.projectile_group, False, pygame.sprite.collide_mask):
-                    projectile.x_vel, projectile.y_vel = calculate_kb(projectile.rect.center, self.anchor.rect.center, projectile.speed)
+                    if projectile.tag != 'torpedo':
+                        projectile.x_vel, projectile.y_vel = calculate_kb(projectile.rect.center, self.anchor.rect.center, projectile.speed)
             if self.anchor.mode != 'still':
                 #anchor-enemy_group
                 for enemy in pygame.sprite.spritecollide(self.anchor, self.enemy_group, False, pygame.sprite.collide_mask):
@@ -230,7 +262,19 @@ class Game:
             #anchor-heart
             for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
                 self.heart_group.remove(heart)
+                self.splash_texts.append(['+1', 256, *heart.rect.center, GREEN])
                 self.hearts += 1
+
+            #projectile_group-enemy_group
+            collided_projectiles = pygame.sprite.groupcollide(self.projectile_group, self.enemy_group, False, False,
+                                                              pygame.sprite.collide_mask)
+            for projectile in collided_projectiles.keys():
+                if projectile.tag == 'torpedo':
+                    self.projectile_group.remove(projectile)
+                    enemies = collided_projectiles[projectile]
+                    for enemy in enemies:
+                        enemy.hit(100)
+                    self.add_particles(enemies[0].rect.center, 50, 25, 20, 0.5, [RED, ORANGE, YELLOW], 'torpedo')
 
             #player-enemy_group
             for enemy in pygame.sprite.spritecollide(self.player, self.enemy_group, False, pygame.sprite.collide_mask):
@@ -240,13 +284,15 @@ class Game:
 
             #player-projectile_group
             for projectile in pygame.sprite.spritecollide(self.player, self.projectile_group, False, pygame.sprite.collide_mask):
-                self.projectile_group.remove(projectile)
-                self.hit_player(projectile)
-                self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, WHITE], 'plasma')
+                if projectile.tag != 'torpedo':
+                    self.projectile_group.remove(projectile)
+                    self.hit_player(projectile)
+                    self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, GREEN, WHITE], 'plasma')
 
             #player-heart
             for heart in pygame.sprite.spritecollide(self.player, self.heart_group, False, pygame.sprite.collide_mask):
                 self.heart_group.remove(heart)
+                self.splash_texts.append(['+1', 256, *heart.rect.center, GREEN])
                 self.hearts += 1
 
             if self.player.shield.enabled:

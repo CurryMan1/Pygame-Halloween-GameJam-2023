@@ -14,16 +14,19 @@ class Healthbar:
         self.hp = max_hp
 
     def draw(self, surf, center):
-        border = pygame.surface.Surface((self.WIDTH + self.BORDER * 2, self.HEIGHT + self.BORDER * 2))
-        border.fill(BLACK)
-        redbar = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
-        redbar.fill(RED)
-        greenbar = pygame.surface.Surface((self.WIDTH * (self.hp / self.max_hp), self.HEIGHT))
-        greenbar.fill(GREEN)
+        try:
+            border = pygame.surface.Surface((self.WIDTH + self.BORDER * 2, self.HEIGHT + self.BORDER * 2))
+            border.fill(BLACK)
+            redbar = pygame.surface.Surface((self.WIDTH, self.HEIGHT))
+            redbar.fill(RED)
+            greenbar = pygame.surface.Surface((self.WIDTH * (self.hp / self.max_hp), self.HEIGHT))
+            greenbar.fill(GREEN)
 
-        redbar.blit(greenbar, (0, 0))
-        border.blit(redbar, (self.BORDER, self.BORDER))
-        surf.blit(border, (center[0] - self.WIDTH / 2, center[1]-70))
+            redbar.blit(greenbar, (0, 0))
+            border.blit(redbar, (self.BORDER, self.BORDER))
+            surf.blit(border, (center[0] - self.WIDTH / 2, center[1]-70))
+        except pygame.error:
+            pass #this means that health < 0 so next frame the enemy will be deleted
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, x: int, y: int, image: pygame.surface.Surface):
@@ -117,38 +120,52 @@ class Player(Entity):
 class Anchor(Entity):
     SPEED = 30
 
-    def __init__(self, x: int, y: int, image: pygame.surface.Surface):
-        super().__init__(x, y, image)
+    def __init__(self, x: int, y: int, images: list):
+        self.images = images
+        super().__init__(x, y, self.images[0])
         self.og_img = self.image
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = 0, 0
         self.angle = 0
 
         self.mode = 'still'
+        self.torpedo_enabled = False
 
     def update(self, player_x_vel, player_y_vel, mouse_pos):
-        if self.mode in ('still', 'return'):
-            if self.mode == 'still':
-                x, y = mouse_pos
-                pos = pygame.math.Vector2(x, y) - self.rect.center
-            else:
-                x, y = CENTER
-                pos = self.rect.center - pygame.math.Vector2(x, y)
+        if not self.torpedo_enabled:
+            self.og_img = self.images[0]
 
+            if self.mode in ('still', 'return'):
+                if self.mode == 'still':
+                    x, y = mouse_pos
+                    pos = pygame.math.Vector2(x, y) - self.rect.center
+                else:
+                    x, y = CENTER
+                    pos = self.rect.center - pygame.math.Vector2(x, y)
+
+                self.angle = pos.angle_to((0, 0))
+                self.image = pygame.transform.rotate(self.og_img, self.angle - 90)
+                self.rect = self.image.get_rect(center=self.rect.center)
+                self.mask = pygame.mask.from_surface(self.image)
+
+                #vel
+                self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
+
+            elif calculate_hypot(CENTER, self.rect.center) >= 400: #checks if length of wire is over 400
+                self.mode = 'return'
+
+            if self.mode != 'still':
+                self.rect.x += self.x_vel+player_x_vel
+                self.rect.y += self.y_vel+player_y_vel
+        else:
+            self.og_img = self.images[1]
+
+            x, y = mouse_pos
+            pos = pygame.math.Vector2(x, y) - self.rect.center
             self.angle = pos.angle_to((0, 0))
             self.image = pygame.transform.rotate(self.og_img, self.angle - 90)
             self.rect = self.image.get_rect(center=self.rect.center)
             self.mask = pygame.mask.from_surface(self.image)
-
-            #vel
-            self.x_vel, self.y_vel = calculate_kb((x, y), self.rect.center, self.SPEED)
-
-        elif calculate_hypot(CENTER, self.rect.center) >= 400: #checks if length of wire is over 400
-            self.mode = 'return'
-
-        if self.mode != 'still':
-            self.rect.x += self.x_vel+player_x_vel
-            self.rect.y += self.y_vel+player_y_vel
 
     def get_bound(self, bound=0):
         return self.rect.top < 0 or\
@@ -198,8 +215,8 @@ class Enemy(Entity):
         #rotate towards player
         x, y = CENTER
         pos = pygame.math.Vector2(x, y) - self.rect.center
-        self.angle = pos.angle_to((0, 0))
-        self.image = pygame.transform.rotate(self.og_img, self.angle-90)
+        self.angle = pos.angle_to((0, 0))-90
+        self.image = pygame.transform.rotate(self.og_img, self.angle)
         self.rect = self.image.get_rect(center=self.rect.center)
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -259,13 +276,14 @@ class PlasmaEnemy(Enemy):
 
         return super().update(player_x_vel, player_y_vel)
 
-class PlasmaBall(Entity):
+class Projectile(Entity):
     BOUND = 3000
     KB = 7
     DAMAGE = 10
 
-    def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface = None):
+    def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface, tag: str=None):
         super().__init__(x, y, image)
+        self.tag = tag
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = x_vel, y_vel
         self.speed = x_vel+y_vel
