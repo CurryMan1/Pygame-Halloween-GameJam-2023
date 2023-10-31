@@ -15,7 +15,7 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 ## How to play
 
-```
+```diff
 + The aim of the game is to survive as long as possible. 
 - You must avoid all the enemies.
 ```
