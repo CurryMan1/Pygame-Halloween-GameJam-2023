@@ -35,7 +35,7 @@ Space/Right Click: Drive Sub in direction of cursor.
 ### Lead Dev 
 **CurryMan1** (bigcurryman69)
 
-### Artist & Bad At Pygame
+### Artist
 **DumbMonkeyTm** (dumbmonkeytm)
 
 ### Code & Head Joker
