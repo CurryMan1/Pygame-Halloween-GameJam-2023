@@ -252,9 +252,7 @@ class Heart(Entity):
     BOUND = 3000
     AIR_RESISTANCE = 0.95
 
-    def __init__(self, x: int, y: int, vel: int, image: pygame.surface.Surface=None):
-        image = pygame.surface.Surface((50, 50))
-        image.fill(RED)
+    def __init__(self, x: int, y: int, vel: int, image: pygame.surface.Surface):
         super().__init__(x, y, image)
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = random.randint(-vel, vel), random.randint(-vel, vel)

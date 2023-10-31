@@ -12,10 +12,11 @@ def get_box(width, height, border_width, fg, bg):
 
 class Button:
     def __init__(self, x: int, y: int, width: int=None, height: int=None, fg=None, bg=None, border_width=None,
-                 text: str=None, text_size=None, text_colour=None, image: pygame.surface.Surface=None):
+                 text: str=None, text_size=None, text_colour=None, draw_text: bool=True, image: pygame.surface.Surface=None):
         self.text = text
         self.text_size = text_size
         self.text_colour = text_colour
+        self.draw_text = draw_text
         if image:
             self.image = image
         else:
@@ -26,7 +27,7 @@ class Button:
         self.clicked = False
         self.can_click = False
 
-    def is_clicked(self, screen: pygame.surface.Surface):  #draws button too
+    def is_clicked(self, surf: pygame.surface.Surface):  #draws button too
         clicked = False
 
         #makes button only give true ONCE (until released)
@@ -41,13 +42,19 @@ class Button:
         else:
             self.can_click = False
 
-        screen.blit(self.image, (self.rect.x, self.rect.y))
-        if self.text:
-            draw_text(self.text, PIXEL_FONT, self.text_colour, self.rect.centerx, self.rect.centery, self.text_size, screen, True)
+        surf.blit(self.image, (self.rect.x, self.rect.y))
+        if self.text and self.draw_text:
+            draw_text(self.text, PIXEL_FONT, self.text_colour, self.rect.centerx, self.rect.centery, self.text_size, surf, True)
 
         return clicked
 
 class UpgradeButton(Button):
-    def __init__(self, x, y, text):
+    def __init__(self, x, y, text, price):
         image = get_box(200, 200, 2, DARK_GREY, LIGHT_GREY)
-        super().__init__(x, y, text=text, text_size=20, text_colour=BLACK, image=image)
+        super().__init__(x, y, text=text, text_size=20, text_colour=BLACK, image=image, draw_text=False)
+        self.price = price
+
+    def is_clicked(self, surf):
+        clicked = super().is_clicked(surf)
+        draw_text(self.text, PIXEL_FONT, self.text_colour, self.rect.centerx, self.rect.centery, self.text_size, surf, True)
+        return clicked

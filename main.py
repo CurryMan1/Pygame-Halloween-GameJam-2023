@@ -46,13 +46,17 @@ class Game:
         upgrade_btn_tags = ['sheild', 'torpedo', 'quad damage']
 
         for i, tag in enumerate(upgrade_btn_tags):
-            u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag)
+            u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag, 50)
             self.upgrade_button_group.append(u_btn)
 
         #other
         self.crosshair = load_img('crosshair.png', True, 3)
         self.overlay = load_img('overlay.png', True)
         self.plasmaball_img = load_img('plasmaball.png', True, 0.1)
+        self.heart_img = load_img('heart.png', True, 0.5)
+
+        self.plasmaenemy_img = load_img('plasmaenemy.png', True, 0.4)
+        self.squid_imgs = load_imgs('squid', True, 0.7)
 
         #game vars
         self.hearts = 0
@@ -67,7 +71,7 @@ class Game:
         clicked = False
 
         for i in range(3):
-            e = random.choice([Enemy(load_imgs('squid', True, 0.7)), PlasmaEnemy(load_imgs('squid', True, 0.7))])
+            e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
             self.enemy_group.append(e)
 
         #game loop
@@ -266,7 +270,7 @@ class Game:
 
     def add_hearts(self, pos, number):
         for i in range(number):
-            heart = Heart(pos[0], pos[1], 5)
+            heart = Heart(pos[0], pos[1], 5, self.heart_img)
             self.heart_group.append(heart)
 
 if __name__ == '__main__':
