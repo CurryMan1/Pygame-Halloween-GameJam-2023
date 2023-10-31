@@ -35,10 +35,10 @@ Space/Right Click: Drive Sub in direction of cursor.
 ### Lead Dev 
 **CurryMan1** (bigcurryman69)
 
-### Artist & being useless at pygame
+### Artist & Bad At Pygame
 **DumbMonkeyTm** (dumbmonkeytm)
 
-### Code 
+### Code & Head Joker
 **mutleyboy99** (mutleyboy99)
 
 ### Sound & Music 
