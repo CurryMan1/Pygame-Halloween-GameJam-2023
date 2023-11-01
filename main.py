@@ -51,7 +51,7 @@ class Game:
                 self.bg_tile_group.append([(x - 1) * self.bg_w, (y - 1) * self.bg_h, self.bg]) #randomise stars
 
         #upgrade buttons
-        upgrade_btn_tags = ['shield', 'torpedo', 'quad damage']
+        upgrade_btn_tags = ['shield', 'torpedo', '4x damage']
 
         for i, tag in enumerate(upgrade_btn_tags):
             u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag, 50)
@@ -175,8 +175,8 @@ class Game:
                 DISPLAY.blit(bg, (x, y))
 
             #title
-            DISPLAY.blit(title_box, (WIDTH/2-title_box.get_width()/2, 120-title_box.get_height()/2))
-            draw_text('Settings', PIXEL_FONT, WHITE, WIDTH/2, 120, 150, DISPLAY, True)
+            DISPLAY.blit(title_box, (WIDTH/2-title_box.get_width()/2, 170-title_box.get_height()/2))
+            draw_text('Settings', PIXEL_FONT, WHITE, WIDTH/2, 170, 150, DISPLAY, True)
 
             #buttons
             if back_btn.is_clicked(DISPLAY):
@@ -208,8 +208,9 @@ class Game:
             pygame.display.update()
 
     def main(self):
-        clicked = False
+        clicked = True
         can_shoot_torpedo = False
+        quad_damage_timer = 0
 
         for i in range(5):
             e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
@@ -278,25 +279,26 @@ class Game:
                 DISPLAY.blit(bg, (x, y))
 
             #particles
-            if self.effects_on:
-                for particle in self.particles:
-                    particle[0][0] += particle[1][0] + player_x_vel
-                    particle[0][1] += particle[1][1] + player_y_vel
-                    particle[2] -= particle[3]
+            for particle in self.particles:
+                particle[0][0] += particle[1][0] + player_x_vel
+                particle[0][1] += particle[1][1] + player_y_vel
+                particle[2] -= particle[3]
 
-                    if particle[5] == 'bubble':
-                        #outline
-                        pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
+                if particle[5] == 'torpedo':
+                    collision_rect = pygame.rect.Rect(particle[0][0]-particle[2], particle[0][1]-particle[2], particle[2]*2, particle[2]*2)
+                    for enemy in collision_rect.collideobjectsall(self.enemy_group):
+                        enemy.hit(100)
+                    if not self.effects_on:
+                        break
 
-                    elif particle[5] == 'torpedo':
-                        collision_rect = pygame.rect.Rect(particle[0][0]-particle[2], particle[0][1]-particle[2], particle[2]*2, particle[2]*2)
-                        for enemy in collision_rect.collideobjectsall(self.enemy_group):
-                            enemy.hit(100)
+                elif particle[5] == 'bubble':
+                    #outline
+                    pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
 
-                    #main particle
-                    pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
-                    if particle[2] <= 0:
-                        self.particles.remove(particle)
+                #main particle
+                pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
+                if particle[2] <= 0:
+                    self.particles.remove(particle)
 
             #heart_group
             for heart in self.heart_group:
@@ -325,6 +327,11 @@ class Game:
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
                                1, 14, 10, 0.3, [BUBBLE_BLUE], 'bubble')
+            #quad damage
+            if quad_damage_timer > 0:
+                quad_damage_timer -= 1
+                if quad_damage_timer == 0:
+                    self.player.damage = int(self.player.damage/4)
 
             #anchor
             self.anchor.update(player_x_vel, player_y_vel, mouse_pos)
@@ -359,6 +366,9 @@ class Game:
                             self.anchor.mode = 'still'
                             self.anchor.x_vel, self.anchor.y_vel = 0,0
                             self.anchor.rect.center = CENTER
+                        elif button.text == '4x damage':
+                            quad_damage_timer = 600
+                            self.player.damage *= 4
 
             #splash_texts
             for sp_text in self.splash_texts:
@@ -391,6 +401,9 @@ class Game:
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
                     self.anchor.mode = 'return'
+                    self.splash_texts.append(
+                        [f'-{self.player.damage}', 256, enemy.rect.centerx,
+                         enemy.rect.centery, RED])
 
             #anchor-heart
             for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
@@ -399,8 +412,7 @@ class Game:
                 self.hearts += 1
 
             #projectile_group-enemy_group
-            collided_projectiles = pygame.sprite.groupcollide(self.projectile_group, self.enemy_group, False, False,
-                                                              pygame.sprite.collide_mask)
+            collided_projectiles = pygame.sprite.groupcollide(self.projectile_group, self.enemy_group, False, False, pygame.sprite.collide_mask)
             for projectile in collided_projectiles.keys():
                 if projectile.tag == 'torpedo':
                     self.projectile_group.remove(projectile)
@@ -463,6 +475,8 @@ class Game:
         self.player.x_vel, self.player.y_vel = calculate_kb(sprite.rect.center, CENTER, sprite.KB / 2)
         self.player.hit(sprite.DAMAGE)
         self.screen_shake = 20
+        self.splash_texts.append([f'-{sprite.DAMAGE}', 256, self.player.rect.centerx+random.randint(-50, 50),
+                                  self.player.rect.centery+random.randint(-50, 50), RED])
 
     def add_particles(self, pos, number, size, vel, speed, colours, tag):
         for i in range(number):
