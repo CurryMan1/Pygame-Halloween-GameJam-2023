@@ -303,14 +303,15 @@ class Game:
 
                 #mine
                 while True:
-                    position_x = random.randint(-2000, WIDTH+2000)
-                    position_y = random.randint(-2000, HEIGHT+2000)
-                    if position_x not in range(0, WIDTH) and\
-                        position_y not in range(0, HEIGHT):
-                        for i in range(4):
+                    for i in range(2):
+                        position_x = random.randint(-2000, WIDTH+2000)
+                        position_y = random.randint(-2000, HEIGHT+2000)
+                        if position_x not in range(0, WIDTH) and\
+                            position_y not in range(0, HEIGHT):
                             mine = Consumable(position_x, position_y, 0, self.seamine_img, 'seamine')
                             self.consumable_group.append(mine)
-                        break
+                            break
+                    break
             else:
                 frames_since_last_enemy += 1
 
