@@ -263,7 +263,7 @@ class Enemy(Entity):
 
 class PlasmaEnemy(Enemy):
     SHOOTING_DELAY = 120
-    SHOOTING_SPEED = 20
+    SHOOTING_SPEED = 30
     DAMAGE = 5
     SPEED = 8
     KB = 10

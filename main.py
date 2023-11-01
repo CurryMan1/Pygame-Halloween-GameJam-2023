@@ -211,7 +211,7 @@ class Game:
                         elif self.anchor.mode == 'away':
                             self.anchor.mode = 'return'
                     else:
-                        torpedo = Projectile(*CENTER, *calculate_kb(mouse_pos, CENTER, self.anchor.SPEED), self.anchor.image, 'torpedo')
+                        torpedo = Projectile(*CENTER, *calculate_kb(mouse_pos, CENTER, self.anchor.SPEED+10), self.anchor.image, 'torpedo')
                         self.projectile_group.append(torpedo)
                         self.anchor.torpedo_enabled = False
                 clicked = True
@@ -256,7 +256,7 @@ class Game:
             for heart in self.heart_group:
                 condition_of_heart = heart.update(player_x_vel, player_y_vel)
                 if condition_of_heart:
-                    self.coin_group.remove(heart)
+                    self.heart_group.remove(heart)
                 heart.draw(DISPLAY)
 
             #anchor line
