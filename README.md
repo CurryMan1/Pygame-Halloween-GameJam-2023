@@ -29,6 +29,8 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 - Accumulate hearts to purchase powerful [upgrades](#Upgrades)
 
+- Avoid the naval mines so you don't get blown up
+
 - Stay vigilant, gather hearts, and face the horrors of the deep to emerge victorious in this heart-pounding underwater adventure!
 
 <a name="Upgrades" />
@@ -47,9 +49,11 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 ## Controls 
 
-Left Click: Shoot Anchor in direction of cursor.
-
-Space/Right Click: Drive Sub in direction of cursor.
+|Button           |What it does                                      |
+|-----------------|--------------------------------------------------|
+|Left Click       | Shoot the Anchor in the direction of the cursor. |
+|Space/Right Click| Drive Sub in the direction of the cursor.        |
+|Tab              | Open Shop                                        |
 
 <a name="Creators" />
 
