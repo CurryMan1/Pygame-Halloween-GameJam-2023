@@ -177,7 +177,7 @@ class Anchor(Entity):
 class Enemy(Entity):
     SPEED = 10
     WATER_RESISTANCE = 0.95
-    DAMAGE = 5
+    DAMAGE = 8
     ANIMATION_DELAY = 5
     KB = 8
 
@@ -264,6 +264,7 @@ class Enemy(Entity):
 class PlasmaEnemy(Enemy):
     SHOOTING_DELAY = 120
     SHOOTING_SPEED = 20
+    DAMAGE = 5
     SPEED = 8
     KB = 10
 
@@ -280,7 +281,7 @@ class PlasmaEnemy(Enemy):
 class Projectile(Entity):
     BOUND = 3000
     KB = 7
-    DAMAGE = 10
+    DAMAGE = 3
 
     def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface, tag: str=None):
         super().__init__(x, y, image, tag)
