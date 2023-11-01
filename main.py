@@ -357,7 +357,7 @@ class Game:
             DISPLAY.blit(self.heart_img, (10, 10))
             draw_text(str(self.hearts), PIXEL_FONT, PINK, self.heart_img.get_width()+10, 5, 50, DISPLAY)
 
-            draw_text(f'time:{round(score/FPS, 1)}', PIXEL_FONT, WHITE, WIDTH / 2, 30, 50, DISPLAY, True)
+            draw_text(str(round(score/FPS, 1)), PIXEL_FONT, WHITE, WIDTH / 2, 30, 50, DISPLAY, True)
 
             #tab for shop text
             draw_text('Tab for shop', PIXEL_FONT, WHITE, WIDTH-360, 5, 50, DISPLAY)
