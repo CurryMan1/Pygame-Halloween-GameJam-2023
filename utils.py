@@ -12,6 +12,7 @@ TINT_FADE = 15
 #colour
 WHITE = (255, 255, 255)
 BUBBLE_BLUE = (0, 191, 255)
+OCEAN_BLUE = (0, 0, 60)
 PLASMA_GREEN = (33, 187, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)

@@ -2,18 +2,19 @@
 import sys
 from math import ceil
 from webbrowser import open
+
+import pygame.mixer_music
+
 #files
 from entities import *
 from ui import *
 
 pygame.init()
-pygame.mixer.init()
 pygame.mouse.set_visible(False)
 
-#theme
+#mixer
+pygame.mixer.init()
 pygame.mixer.music.set_volume(0.1)
-pygame.mixer.music.load('assets/sound/theme.wav')
-pygame.mixer.music.play(-1)
 
 FPS = 60
 CLOCK = pygame.time.Clock()
@@ -21,6 +22,7 @@ SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
 DISPLAY = pygame.surface.Surface((WIDTH, HEIGHT))
 
 pygame.display.set_caption('Anchor')
+pygame.display.set_icon(load_img('icon.png', True))
 
 class Game:
     def __init__(self):
@@ -41,15 +43,6 @@ class Game:
         #[text, opacity, x, y]
         self.splash_texts = []
 
-        #bg
-        self.bg = load_img('ocean.png', False, 15)
-        self.bg_w, self.bg_h = self.bg.get_rect().size
-        self.bg_dimensions = [ceil(WIDTH / self.bg_w) + 1, ceil(HEIGHT / self.bg_h) + 1]  #0 is x, 1 is y
-
-        for x in range(self.bg_dimensions[0]):
-            for y in range(self.bg_dimensions[1]):
-                self.bg_tile_group.append([(x - 1) * self.bg_w, (y - 1) * self.bg_h, self.bg]) #randomise stars
-
         #upgrade buttons
         upgrade_btn_tags = ['shield', 'torpedo', '4x damage']
 
@@ -58,8 +51,9 @@ class Game:
             self.upgrade_button_group.append(u_btn)
 
         #other
-        self.logo = load_img('logo.png', True)
+        self.logo = load_img('logo.png', True, 1.1)
         self.crosshair = load_img('crosshair.png', True, 3)
+        self.light = load_img('light.png', True)
         self.overlay = load_img('overlay.png', True)
         self.plasmaball_img = load_img('plasmaball.png', True, 0.1)
         self.heart_img = load_img('heart.png', True, 0.5)
@@ -76,6 +70,9 @@ class Game:
         self.last_enemy = self.enemy_delay
 
     def start(self):
+        pygame.mixer.music.load('assets/sound/theme.wav')
+        pygame.mixer.music.play(-1)
+
         start_btn = Button(WIDTH/2-400, HEIGHT/2+30, 800, 150, text='Start', fg=DARK_GREY, bg=LIGHT_GREY, text_size=90,
                            text_colour=WHITE, border_width=5)
 
@@ -88,26 +85,7 @@ class Game:
             mouse_pos = pygame.mouse.get_pos()
 
             #bg
-            for i, coords_and_bg in enumerate(self.bg_tile_group):  #bg_tile_group
-                x, y, bg = coords_and_bg
-
-                diff_x = x - WIDTH
-                diff_y = y - HEIGHT
-
-                #works regardless of window size (if FOV is bigger than tile)
-                if 0 < diff_x:
-                    x = WIDTH - (self.bg_dimensions[0] * self.bg_w) + diff_x
-                elif x < WIDTH - (self.bg_dimensions[0] * self.bg_w):
-                    diff_x = x - (WIDTH - (self.bg_dimensions[0] * self.bg_w))
-                    x = WIDTH + diff_x
-
-                if 0 < diff_y:
-                    y = HEIGHT - (self.bg_dimensions[1] * self.bg_h) + diff_y
-                elif y < HEIGHT - (self.bg_dimensions[1] * self.bg_h):
-                    diff_y = y - (HEIGHT - (self.bg_dimensions[1] * self.bg_h))
-                    y = HEIGHT + diff_y
-
-                DISPLAY.blit(bg, (x, y))
+            DISPLAY.fill(OCEAN_BLUE)
 
             DISPLAY.blit(self.logo, (WIDTH/2-self.logo.get_width()/2, 60))
 
@@ -115,6 +93,13 @@ class Game:
                 self.main()
             if settings_btn.is_clicked(DISPLAY):
                 self.settings(self.start)
+
+            #overlay
+            DISPLAY.blit(self.overlay, (0, 0))
+
+            #light
+            DISPLAY.blit(self.light, (
+            mouse_pos[0] - self.light.get_width() / 2, mouse_pos[1] - self.light.get_height() / 2))
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
@@ -153,26 +138,7 @@ class Game:
             mouse_pos = pygame.mouse.get_pos()
 
             #bg
-            for i, coords_and_bg in enumerate(self.bg_tile_group): #bg_tile_group
-                x, y, bg = coords_and_bg
-
-                diff_x = x - WIDTH
-                diff_y = y - HEIGHT
-
-                #works regardless of window size (if FOV is bigger than tile)
-                if 0 < diff_x:
-                    x = WIDTH - (self.bg_dimensions[0] * self.bg_w) + diff_x
-                elif x < WIDTH - (self.bg_dimensions[0] * self.bg_w):
-                    diff_x = x - (WIDTH - (self.bg_dimensions[0] * self.bg_w))
-                    x = WIDTH + diff_x
-
-                if 0 < diff_y:
-                    y = HEIGHT - (self.bg_dimensions[1] * self.bg_h) + diff_y
-                elif y < HEIGHT - (self.bg_dimensions[1] * self.bg_h):
-                    diff_y = y - (HEIGHT - (self.bg_dimensions[1] * self.bg_h))
-                    y = HEIGHT + diff_y
-
-                DISPLAY.blit(bg, (x, y))
+            DISPLAY.fill(OCEAN_BLUE)
 
             #title
             DISPLAY.blit(title_box, (WIDTH/2-title_box.get_width()/2, 170-title_box.get_height()/2))
@@ -195,6 +161,13 @@ class Game:
             if github_btn.is_clicked(DISPLAY):
                 open('https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023')
 
+            #overlay
+            DISPLAY.blit(self.overlay, (0, 0))
+
+            #light
+            DISPLAY.blit(self.light, (
+                mouse_pos[0] - self.light.get_width() / 2, mouse_pos[1] - self.light.get_height() / 2))
+
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
 
@@ -208,13 +181,15 @@ class Game:
             pygame.display.update()
 
     def main(self):
+        pygame.mixer.music.load('assets/sound/ambience.wav')
+        pygame.mixer.music.play()
+
         clicked = True
         can_shoot_torpedo = False
         quad_damage_timer = 0
 
-        for i in range(5):
-            e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
-            self.enemy_group.append(e)
+        enemy_spawn_delay = 30*FPS
+        frames_since_last_enemy = enemy_spawn_delay-2*FPS
 
         #game loop
         while True:
@@ -243,7 +218,6 @@ class Game:
             else:
                 clicked = False
 
-
             if keys[pygame.K_SPACE] or mouse_btns[2]:
                 if not self.player.on_cooldown:
                     self.player.x_vel, self.player.y_vel =\
@@ -254,29 +228,7 @@ class Game:
             player_x_vel, player_y_vel = self.player.x_vel, self.player.y_vel
 
             #DRAW AND UPDATE
-            #bg
-            for i, coords_and_bg in enumerate(self.bg_tile_group): #bg_tile_group
-                x, y, bg = coords_and_bg
-
-                diff_x = x - WIDTH
-                diff_y = y - HEIGHT
-
-                #works regardless of window size (if FOV is bigger than tile)
-                if 0 < diff_x:
-                    x = WIDTH - (self.bg_dimensions[0] * self.bg_w) + diff_x
-                elif x < WIDTH - (self.bg_dimensions[0] * self.bg_w):
-                    diff_x = x - (WIDTH - (self.bg_dimensions[0] * self.bg_w))
-                    x = WIDTH + diff_x
-
-                if 0 < diff_y:
-                    y = HEIGHT - (self.bg_dimensions[1] * self.bg_h) + diff_y
-                elif y < HEIGHT - (self.bg_dimensions[1] * self.bg_h):
-                    diff_y = y - (HEIGHT - (self.bg_dimensions[1] * self.bg_h))
-                    y = HEIGHT + diff_y
-
-                self.bg_tile_group[i] = [x + player_x_vel, y + player_y_vel, bg]
-
-                DISPLAY.blit(bg, (x, y))
+            DISPLAY.fill(OCEAN_BLUE)
 
             #particles
             for particle in self.particles:
@@ -288,15 +240,15 @@ class Game:
                     collision_rect = pygame.rect.Rect(particle[0][0]-particle[2], particle[0][1]-particle[2], particle[2]*2, particle[2]*2)
                     for enemy in collision_rect.collideobjectsall(self.enemy_group):
                         enemy.hit(100)
-                    if not self.effects_on:
-                        break
 
                 elif particle[5] == 'bubble':
                     #outline
                     pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
 
-                #main particle
-                pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
+                if self.effects_on or particle[5] == 'bubble':
+                    #main particle
+                    pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
+
                 if particle[2] <= 0:
                     self.particles.remove(particle)
 
@@ -322,6 +274,16 @@ class Game:
                         enemy.last_shot = 0
                 enemy.draw(DISPLAY)
 
+            if frames_since_last_enemy >= round(enemy_spawn_delay):
+                for i in range(5):
+                    e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
+                    self.enemy_group.append(e)
+                frames_since_last_enemy = 0
+                if enemy_spawn_delay > 5*FPS:
+                    enemy_spawn_delay -= 0.3
+            else:
+                frames_since_last_enemy += 1
+
             #player
             self.player.update(mouse_pos[0])
             self.player.draw(DISPLAY)
@@ -343,6 +305,15 @@ class Game:
                     self.projectile_group.remove(projectile)
                 projectile.draw(DISPLAY)
 
+            #splash_texts
+            for sp_text in self.splash_texts:
+                text, opacity, x, y, colour = sp_text
+                sp_text[1] -= 10
+
+                draw_text(text, PIXEL_FONT, colour, x, y, 50, DISPLAY, True, opacity)
+                if opacity <= 0:
+                    self.splash_texts.remove(sp_text)
+
             #overlay
             DISPLAY.blit(self.overlay, (0, 0))
 
@@ -356,28 +327,30 @@ class Game:
             if keys[pygame.K_TAB]:
                 for button in self.upgrade_button_group:
                     if button.is_clicked(DISPLAY):
-                        self.splash_texts.append([f'-{button.price}', 256, *mouse_pos, RED])
-                        #if self.hearts > button.price:
-                        if button.text == 'shield':
-                            if not self.player.shield.enabled:
-                                self.player.shield.toggle()
-                        elif button.text == 'torpedo':
-                            self.anchor.torpedo_enabled = True
-                            self.anchor.mode = 'still'
-                            self.anchor.x_vel, self.anchor.y_vel = 0,0
-                            self.anchor.rect.center = CENTER
-                        elif button.text == '4x damage':
-                            quad_damage_timer = 600
-                            self.player.damage *= 4
+                        if self.hearts > button.price:
+                            charge = True
+                            if button.text == 'shield':
+                                if not self.player.shield.enabled:
+                                    self.player.shield.toggle()
+                            elif button.text == 'torpedo':
+                                self.anchor.torpedo_enabled = True
+                                self.anchor.mode = 'still'
+                                self.anchor.x_vel, self.anchor.y_vel = 0,0
+                                self.anchor.rect.center = CENTER
+                            elif button.text == '4x damage':
+                                if quad_damage_timer == 0:
+                                    quad_damage_timer = 600
+                                    self.player.damage *= 4
+                                else:
+                                    charge = False
 
-            #splash_texts
-            for sp_text in self.splash_texts:
-                text, opacity, x, y, colour = sp_text
-                sp_text[1] -= 10
+                            if charge:
+                                self.splash_texts.append([f'-{button.price}', 256, *mouse_pos, RED])
+                                self.hearts -= button.price
 
-                draw_text(text, PIXEL_FONT, colour, x, y, 50, DISPLAY, True, opacity)
-                if opacity <= 0:
-                    self.splash_texts.remove(sp_text)
+            #light
+            DISPLAY.blit(self.light, (
+                mouse_pos[0] - self.light.get_width() / 2, mouse_pos[1] - self.light.get_height() / 2))
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
