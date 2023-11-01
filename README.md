@@ -37,11 +37,12 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 ### Upgrades
 
-|Upgrade	 |What it does                                               |
-|------------|-----------------------------------------------------------|
-|Shield      |provides temporary invincibility							 |
-|Torpedo     |demolishes everything in its path                          |
-|Quad Damage |intensifies your attacks, dealing 4x damage for 10 seconds |
+|Upgrade	  |What it does                                               |Base Cost|
+|-------------|-----------------------------------------------------------|---------|
+|Shield       |provides temporary invincibility							  |30       |
+|Torpedo      |demolishes everything in its path                          |60       |
+|Quad Damage  |intensifies your attacks, dealing 4x damage for 10 seconds |45       |
+|Sharp Anchor |sharpens your anchor, adding 5 damage per upgrade          |15       |
 
 
 
@@ -62,10 +63,10 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 ### Lead Dev 
 **CurryMan1** (bigcurryman69)
 
-### Artist
+### Artist & Dev
 **DumbMonkeyTm** (dumbmonkeytm)
 
-### ReadMe & Itch.Io
+### Admin & Itch.io
 **mutleyboy99** (mutleyboy99)
 
 ### Sound & Music 
