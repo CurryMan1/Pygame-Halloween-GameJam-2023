@@ -15,9 +15,32 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 ## How to play
 
-The aim of the game is to survive as long as possible. 
+#### Welcome to the depths of the abyss in Anchor, our thrilling underwater horror game!
 
-You must avoid and destroy **all** the enemies with your anchor.
+- You find yourself inside a submarine, surrounded by menacing sea monsters.
+
+- Your mission is to survive and conquer the eerie underwater world.
+
+- To play, simply left-click in the direction you want to shoot your anchor at the approaching enemies.
+
+- To move your submarine, right-click or press space with your cursor in the direction you want to go.
+
+- Open the shop for power-ups by pressing the Tab key. Collect hearts dropped by the defeated sea monsters, with each monster dropping between 2 and 6 hearts.
+
+- Accumulate hearts to purchase powerful [upgrades](#Upgrades)
+
+- Stay vigilant, gather hearts, and face the horrors of the deep to emerge victorious in this heart-pounding underwater adventure!
+
+<a name="Upgrades" />
+
+### Upgrades
+
+|Upgrade	 |What it does                                               |
+|------------|-----------------------------------------------------------|
+|Shield      |provides temporary invincibility							 |
+|Torpedo     |demolishes everything in its path                          |
+|Quad Damage |intensifies your attacks, dealing 4x damage for 10 seconds |
+
 
 
 <a name="Controls" />
@@ -38,7 +61,7 @@ Space/Right Click: Drive Sub in direction of cursor.
 ### Artist
 **DumbMonkeyTm** (dumbmonkeytm)
 
-### Code & Head Joker
+### ReadMe & Itch.Io
 **mutleyboy99** (mutleyboy99)
 
 ### Sound & Music 
