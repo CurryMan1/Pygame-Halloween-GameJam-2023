@@ -394,7 +394,7 @@ class Game:
             #player hp
             dec = self.player.hp/self.player.MAX_HP
             #siren
-            pygame.mixer.Channel(0).set_volume(max(0.2 - dec, 0))
+            pygame.mixer.Channel(0).set_volume(max(0.25 - dec, 0))
             #tint
             tint = DISPLAY.copy()
             tint.fill(RED, special_flags=pygame.BLEND_RGB_MULT)
@@ -527,7 +527,6 @@ class Game:
         #upgrade buttons
         for i, btn in enumerate(self.upgrade_btn_tags):
             tag, price = btn
-
             u_btn = UpgradeButton(i * 210 + 10, HEIGHT - 210, tag, price)
             self.upgrade_button_group.append(u_btn)
 

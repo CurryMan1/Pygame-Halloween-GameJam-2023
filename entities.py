@@ -63,7 +63,7 @@ class Shield(Entity):
 class Player(Entity):
     SPEED = 12
     WATER_RESISTANCE = 0.95 #for timesing
-    MAX_HP = 1500
+    MAX_HP = 1100
 
     def __init__(self, x: int, y: int, images: list, shield_img: pygame.surface.Surface):
         self.img_no = 0
@@ -298,7 +298,7 @@ class Projectile(Entity):
 class Consumable(Entity):
     BOUND = 3000
     AIR_RESISTANCE = 0.95
-    DAMAGE = 750
+    DAMAGE = 500
     KB = 60
 
     def __init__(self, x: int, y: int, vel: int, image: pygame.surface.Surface, tag=None):
