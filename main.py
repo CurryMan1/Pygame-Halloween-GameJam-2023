@@ -200,7 +200,7 @@ class Game:
         can_shoot_torpedo = False
         quad_damage_timer = 0
 
-        enemy_spawn_delay = 20*FPS
+        enemy_spawn_delay = 10*FPS
         frames_since_last_enemy = enemy_spawn_delay-2*FPS
         score = 0
 
