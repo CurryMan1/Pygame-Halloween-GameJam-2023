@@ -63,6 +63,7 @@ class Shield(Entity):
 class Player(Entity):
     SPEED = 12
     WATER_RESISTANCE = 0.95 #for timesing
+    MAX_HP = 1500
 
     def __init__(self, x: int, y: int, images: list, shield_img: pygame.surface.Surface):
         self.img_no = 0
@@ -70,17 +71,15 @@ class Player(Entity):
 
         #(changeable) stats
         self.damage = 10
-        self.shooting_delay = 20
 
         self.images = images
         self.mask = pygame.mask.from_surface(self.image)
         self.og_img = self.image
-        self.last_shot = self.shooting_delay
         self.angle = 0
         self.x_vel, self.y_vel = 0, 0
 
         self.on_cooldown = False
-        self.hp = 1500
+        self.hp = self.MAX_HP
 
         self.shield = Shield(shield_img)
 
@@ -99,12 +98,12 @@ class Player(Entity):
         if self.image != img:
             self.mask = pygame.mask.from_surface(self.image)
 
-        if self.last_shot < self.shooting_delay:
-            self.last_shot += 1
-
         if self.on_cooldown:
             if abs(self.x_vel) < 1.5 and abs(self.y_vel) < 1.5:
                 self.on_cooldown = False
+
+        if self.hp <= 0:
+            return True
 
     def hit(self, damage):
         self.hp -= damage

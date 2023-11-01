@@ -3,8 +3,6 @@ import sys
 from math import ceil
 from webbrowser import open
 
-import pygame.mixer_music
-
 #files
 from entities import *
 from ui import *
@@ -44,10 +42,12 @@ class Game:
         self.splash_texts = []
 
         #upgrade buttons
-        upgrade_btn_tags = ['shield', 'torpedo', '4x damage']
+        upgrade_btn_tags = [['shield', 30], ['torpedo', 60], ['quad damage', 45], ['sharp anchor', 15]]
 
-        for i, tag in enumerate(upgrade_btn_tags):
-            u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag, 50)
+        for i, btn in enumerate(upgrade_btn_tags):
+            tag, price = btn
+
+            u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag, price)
             self.upgrade_button_group.append(u_btn)
 
         #other
@@ -57,7 +57,6 @@ class Game:
         self.overlay = load_img('overlay.png', True)
         self.plasmaball_img = load_img('plasmaball.png', True, 0.1)
         self.heart_img = load_img('heart.png', True, 0.5)
-
         self.plasmaenemy_img = load_img('plasmaenemy.png', True, 0.4)
         self.seamine_img = load_img('seamines.png', True, 0.4)
         self.squid_imgs = load_imgs('squid', True, 0.7)
@@ -70,9 +69,13 @@ class Game:
         self.enemy_delay = 240
         self.last_enemy = self.enemy_delay
 
-    def start(self):
-        pygame.mixer.music.load('assets/sound/theme.wav')
-        pygame.mixer.music.play(-1)
+        #sound
+        self.siren_sound = load_sound('sub/siren.mp3')
+
+    def start(self, first=False):
+        if first:
+            pygame.mixer.music.load('assets/sound/theme.wav')
+            pygame.mixer.music.play(-1)
 
         start_btn = Button(WIDTH/2-400, HEIGHT/2+30, 800, 150, text='Start', fg=DARK_GREY, bg=LIGHT_GREY, text_size=90,
                            text_colour=WHITE, border_width=5)
@@ -91,9 +94,9 @@ class Game:
             DISPLAY.blit(self.logo, (WIDTH/2-self.logo.get_width()/2, 60))
 
             if start_btn.is_clicked(DISPLAY):
-                self.main()
+                return self.main()
             if settings_btn.is_clicked(DISPLAY):
-                self.settings(self.start)
+                return self.settings(self.start)
 
             #overlay
             DISPLAY.blit(self.overlay, (0, 0))
@@ -147,7 +150,7 @@ class Game:
 
             #buttons
             if back_btn.is_clicked(DISPLAY):
-                last_menu()
+                return last_menu()
             if sound_btn.is_clicked(DISPLAY):
                 self.sound_on = 1-self.sound_on
                 sound_btn.text = f'Sound:{["OFF", "ON"][self.sound_on]}'
@@ -185,17 +188,26 @@ class Game:
         pygame.mixer.music.load('assets/sound/ambience.wav')
         pygame.mixer.music.play()
 
+        pygame.mixer.Channel(0).set_volume(0)
+        pygame.mixer.Channel(0).play(self.siren_sound, -1)
+
         clicked = True
         can_shoot_torpedo = False
         quad_damage_timer = 0
 
         enemy_spawn_delay = 30*FPS
         frames_since_last_enemy = enemy_spawn_delay-2*FPS
+        score = 0
 
 
         #game loop
         while True:
             CLOCK.tick(FPS)
+
+            #score
+            score += 1
+            if self.player.hp < self.player.MAX_HP:
+                self.player.hp += 0.1
 
             #mouse and keys
             mouse_pos = pygame.mouse.get_pos()
@@ -280,23 +292,30 @@ class Game:
                 for i in range(5):
                     e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
                     self.enemy_group.append(e)
-                for i in range(1000):
-                    position_x = random.randint(-1000,2500)
-                    position_y = random.randint(-3000, 3000)
-                    if position_x < 0 and position_y > HEIGHT or position_x > WIDTH and position_y < 0:
-                        e = Consumable(position_x, position_y, 0, self.seamine_img, "Seamine")
-                        self.consumable_group.append(e)
                 frames_since_last_enemy = 0
                 if enemy_spawn_delay > 5*FPS:
                     enemy_spawn_delay -= 0.3
+
+                #mine
+                while True:
+                    position_x = random.randint(-2000, WIDTH+2000)
+                    position_y = random.randint(-2000, HEIGHT+2000)
+                    if position_x not in range(0, WIDTH) and\
+                        position_y not in range(0, HEIGHT):
+                        mine = Consumable(position_x, position_y, 0, self.seamine_img, 'seamine')
+                        self.consumable_group.append(mine)
+                        break
             else:
                 frames_since_last_enemy += 1
 
             #player
-            self.player.update(mouse_pos[0])
+            if self.player.update(mouse_pos[0]):
+                self.player_dead(score/FPS)
+
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
                                1, 14, 10, 0.3, [BUBBLE_BLUE], 'bubble')
+
             #quad damage
             if quad_damage_timer > 0:
                 quad_damage_timer -= 1
@@ -314,13 +333,14 @@ class Game:
                 projectile.draw(DISPLAY)
 
             #splash_texts
-            for sp_text in self.splash_texts:
-                text, opacity, x, y, colour = sp_text
-                sp_text[1] -= 10
+            if self.effects_on:
+                for sp_text in self.splash_texts:
+                    text, opacity, x, y, colour = sp_text
+                    sp_text[1] -= 10
 
-                draw_text(text, PIXEL_FONT, colour, x, y, 50, DISPLAY, True, opacity)
-                if opacity <= 0:
-                    self.splash_texts.remove(sp_text)
+                    draw_text(text, PIXEL_FONT, colour, x, y, 50, DISPLAY, True, opacity)
+                    if opacity <= 0:
+                        self.splash_texts.remove(sp_text)
 
             #overlay
             DISPLAY.blit(self.overlay, (0, 0))
@@ -328,14 +348,17 @@ class Game:
             #UI
             #no_of_hearts
             DISPLAY.blit(self.heart_img, (10, 10))
-            draw_text(str(self.hearts), PIXEL_FONT, 'pink', self.heart_img.get_width()+10, 5, 50, DISPLAY)
+            draw_text(str(self.hearts), PIXEL_FONT, PINK, self.heart_img.get_width()+10, 5, 50, DISPLAY)
+
+            #tab for shop text
+            draw_text('Tab for shop', PIXEL_FONT, WHITE, WIDTH-360, 5, 50, DISPLAY)
 
             #buttons
             #upgrade buttons
             if keys[pygame.K_TAB]:
                 for button in self.upgrade_button_group:
                     if button.is_clicked(DISPLAY):
-                        if self.hearts > button.price:
+                        if self.hearts >= button.price:
                             charge = True
                             if button.text == 'shield':
                                 if not self.player.shield.enabled:
@@ -345,20 +368,33 @@ class Game:
                                 self.anchor.mode = 'still'
                                 self.anchor.x_vel, self.anchor.y_vel = 0,0
                                 self.anchor.rect.center = CENTER
-                            elif button.text == '4x damage':
+                            elif button.text == 'quad damage':
                                 if quad_damage_timer == 0:
                                     quad_damage_timer = 600
                                     self.player.damage *= 4
                                 else:
                                     charge = False
+                            else:
+                                self.player.damage += 5
 
                             if charge:
                                 self.splash_texts.append([f'-{button.price}', 256, *mouse_pos, RED])
                                 self.hearts -= button.price
+                                button.price = round(button.price*1.2)
 
             #light
             DISPLAY.blit(self.light, (
                 mouse_pos[0] - self.light.get_width() / 2, mouse_pos[1] - self.light.get_height() / 2))
+
+            #player hp
+            dec = self.player.hp/self.player.MAX_HP
+            #siren
+            pygame.mixer.Channel(0).set_volume(max(0.2 - dec, 0))
+            #tint
+            tint = DISPLAY.copy()
+            tint.fill(RED, special_flags=pygame.BLEND_RGB_MULT)
+            tint.set_alpha(max(100-dec*255, 0))
+            DISPLAY.blit(tint, (0, 0))
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
@@ -374,7 +410,7 @@ class Game:
                 #anchor-projectile_group
                 for projectile in pygame.sprite.spritecollide(self.anchor, self.projectile_group, False, pygame.sprite.collide_mask):
                     if projectile.tag != 'torpedo':
-                        projectile.x_vel, projectile.y_vel = calculate_kb(projectile.rect.center, self.anchor.rect.center, projectile.speed)
+                        projectile.x_vel, projectile.y_vel = calculate_kb(self.anchor.rect.center, projectile.rect.center, projectile.speed)
             if self.anchor.mode != 'still':
                 #anchor-enemy_group
                 for enemy in pygame.sprite.spritecollide(self.anchor, self.enemy_group, False, pygame.sprite.collide_mask):
@@ -388,10 +424,12 @@ class Game:
 
             #anchor-consumable
             for consumable in pygame.sprite.spritecollide(self.anchor, self.consumable_group, False, pygame.sprite.collide_mask):
-                if consumable.tag != "Seamine":
-                    self.consumable_group.remove(consumable)
+                self.consumable_group.remove(consumable)
+                if consumable.tag != 'seamine':
                     self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
                     self.hearts += 1
+                else:
+                    self.add_particles(consumable.rect.center, 50, 25, 20, 0.5, [RED, ORANGE, YELLOW], 'seamine')
 
             #projectile_group-enemy_group
             collided_projectiles = pygame.sprite.groupcollide(self.projectile_group, self.enemy_group, False, False, pygame.sprite.collide_mask)
@@ -416,12 +454,13 @@ class Game:
                     self.hit_player(projectile)
                     self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, GREEN, WHITE], 'plasma')
 
-            #player-consumable
+            #player-consumable_group
             for consumable in pygame.sprite.spritecollide(self.player, self.consumable_group, False, pygame.sprite.collide_mask):
                 self.consumable_group.remove(consumable)
-                if consumable.tag == "Seamine":
+                if consumable.tag == 'seamine':
                     self.screen_shake = 30
                     self.hit_player(consumable)
+                    self.add_particles(consumable.rect.center, 50, 25, 20, 0.5, [RED, ORANGE, YELLOW], 'seamine')
                 else:
                     self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
                     self.hearts += 1
@@ -457,6 +496,82 @@ class Game:
 
             pygame.display.update()
 
+    def player_dead(self, score):
+        pygame.mixer.Channel(0).fadeout(1)
+        belt = pygame.surface.Surface((WIDTH, 400))
+        belt.fill(LIGHT_GREY)
+
+        home_btn = Button(WIDTH / 2 - 300, 700, 600, 120, text='Try Again', fg=DARK_GREY, bg=LIGHT_GREY,
+                            text_size=70,
+                            text_colour=WHITE, border_width=5)
+
+        #RESET
+        self.enemy_group = []
+        self.consumable_group = []
+        self.projectile_group = []
+        self.upgrade_button_group = []
+        self.bg_tile_group = []
+        self.particles = []
+        self.splash_texts = []
+
+        self.player.shield.enabled = False
+        self.player.hp = self.player.MAX_HP
+        self.player.damage = 10
+
+        #upgrade buttons
+        upgrade_btn_tags = ['shield', 'torpedo', '4x damage']
+
+        for i, tag in enumerate(upgrade_btn_tags):
+            u_btn = UpgradeButton(i * 210 + 10, HEIGHT - 210, tag, 50)
+            self.upgrade_button_group.append(u_btn)
+
+        #game vars
+        self.hearts = 0
+        self.screen_shake = 0
+        self.enemy_delay = 240
+        self.last_enemy = self.enemy_delay
+
+        opacity = 0
+        while True:
+            CLOCK.tick(FPS)
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            #bg
+            DISPLAY.fill(OCEAN_BLUE)
+
+            #dead message
+            belt.set_alpha(opacity)
+            if opacity < 255:
+                opacity += 2
+            DISPLAY.blit(belt, (0, HEIGHT/2 - 200))
+
+            draw_text('wasted', PIXEL_FONT, BLACK, WIDTH/2, HEIGHT/2-50, 230, DISPLAY, True, opacity)
+            draw_text(f'You lasted {round(score, 1)} seconds', PIXEL_FONT, BLACK, WIDTH / 2, HEIGHT / 2+100, 70, DISPLAY, True, opacity)
+
+            #btn
+            if home_btn.is_clicked(DISPLAY):
+                return self.start(True)
+
+            #overlay
+            DISPLAY.blit(self.overlay, (0, 0))
+
+            #light
+            DISPLAY.blit(self.light, (
+            mouse_pos[0] - self.light.get_width() / 2, mouse_pos[1] - self.light.get_height() / 2))
+
+            #crosshair
+            DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            SCREEN.blit(DISPLAY, (0, 0))
+
+            pygame.display.update()
+
     def hit_player(self, sprite):
         self.player.x_vel, self.player.y_vel = calculate_kb(sprite.rect.center, CENTER, sprite.KB / 2)
         self.player.hit(sprite.DAMAGE)
@@ -481,4 +596,4 @@ class Game:
 
 if __name__ == '__main__':
     g = Game()
-    g.start()
+    g.start(True)

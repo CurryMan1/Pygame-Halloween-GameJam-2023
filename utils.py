@@ -10,17 +10,18 @@ CENTER = (WIDTH/2, HEIGHT/2)
 TINT_FADE = 15
 
 #colour
+BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BUBBLE_BLUE = (0, 191, 255)
 OCEAN_BLUE = (0, 0, 60)
 PLASMA_GREEN = (33, 187, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+PINK = (255, 97, 131)
 ORANGE = (255, 115, 59)
 YELLOW = (255, 255, 0)
 DARK_GREY = (28, 28, 28)
 LIGHT_GREY = (188, 188, 188)
-BLACK = (0, 0, 0)
 
 #font
 PIXEL_FONT = 'assets/other/pixel_font.ttf'
