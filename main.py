@@ -32,7 +32,7 @@ class Game:
 
         #group
         self.enemy_group = []
-        self.heart_group = []
+        self.consumable_group = []
         self.projectile_group = []
         self.upgrade_button_group = []
         self.bg_tile_group = []
@@ -59,6 +59,7 @@ class Game:
         self.heart_img = load_img('heart.png', True, 0.5)
 
         self.plasmaenemy_img = load_img('plasmaenemy.png', True, 0.4)
+        self.seamine_img = load_img('seamines.png', True, 0.4)
         self.squid_imgs = load_imgs('squid', True, 0.7)
 
         #game vars
@@ -191,6 +192,7 @@ class Game:
         enemy_spawn_delay = 30*FPS
         frames_since_last_enemy = enemy_spawn_delay-2*FPS
 
+
         #game loop
         while True:
             CLOCK.tick(FPS)
@@ -252,12 +254,12 @@ class Game:
                 if particle[2] <= 0:
                     self.particles.remove(particle)
 
-            #heart_group
-            for heart in self.heart_group:
-                condition_of_heart = heart.update(player_x_vel, player_y_vel)
+            #consumable_group
+            for consumable in self.consumable_group:
+                condition_of_heart = consumable.update(player_x_vel, player_y_vel)
                 if condition_of_heart:
-                    self.heart_group.remove(heart)
-                heart.draw(DISPLAY)
+                    self.consumable_group.remove(consumable)
+                consumable.draw(DISPLAY)
 
             #anchor line
             pygame.draw.line(DISPLAY, DARK_GREY, self.anchor.rect.center, CENTER, 5)
@@ -278,6 +280,12 @@ class Game:
                 for i in range(5):
                     e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
                     self.enemy_group.append(e)
+                for i in range(1000):
+                    position_x = random.randint(-1000,2500)
+                    position_y = random.randint(-3000, 3000)
+                    if position_x < 0 and position_y > HEIGHT or position_x > WIDTH and position_y < 0:
+                        e = Consumable(position_x, position_y, 0, self.seamine_img, "Seamine")
+                        self.consumable_group.append(e)
                 frames_since_last_enemy = 0
                 if enemy_spawn_delay > 5*FPS:
                     enemy_spawn_delay -= 0.3
@@ -378,11 +386,12 @@ class Game:
                         [f'-{self.player.damage}', 256, enemy.rect.centerx,
                          enemy.rect.centery, RED])
 
-            #anchor-heart
-            for heart in pygame.sprite.spritecollide(self.anchor, self.heart_group, False, pygame.sprite.collide_mask):
-                self.heart_group.remove(heart)
-                self.splash_texts.append(['+1', 256, *heart.rect.center, GREEN])
-                self.hearts += 1
+            #anchor-consumable
+            for consumable in pygame.sprite.spritecollide(self.anchor, self.consumable_group, False, pygame.sprite.collide_mask):
+                if consumable.tag != "Seamine":
+                    self.consumable_group.remove(consumable)
+                    self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
+                    self.hearts += 1
 
             #projectile_group-enemy_group
             collided_projectiles = pygame.sprite.groupcollide(self.projectile_group, self.enemy_group, False, False, pygame.sprite.collide_mask)
@@ -407,11 +416,15 @@ class Game:
                     self.hit_player(projectile)
                     self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, GREEN, WHITE], 'plasma')
 
-            #player-heart
-            for heart in pygame.sprite.spritecollide(self.player, self.heart_group, False, pygame.sprite.collide_mask):
-                self.heart_group.remove(heart)
-                self.splash_texts.append(['+1', 256, *heart.rect.center, GREEN])
-                self.hearts += 1
+            #player-consumable
+            for consumable in pygame.sprite.spritecollide(self.player, self.consumable_group, False, pygame.sprite.collide_mask):
+                self.consumable_group.remove(consumable)
+                if consumable.tag == "Seamine":
+                    self.screen_shake = 30
+                    self.hit_player(consumable)
+                else:
+                    self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
+                    self.hearts += 1
 
             if self.player.shield.enabled:
                 #player.shield-enemy_group
@@ -459,8 +472,8 @@ class Game:
 
     def add_hearts(self, pos, number):
         for i in range(number):
-            heart = Heart(pos[0], pos[1], 5, self.heart_img)
-            self.heart_group.append(heart)
+            heart = Consumable(pos[0], pos[1], 5, self.heart_img)
+            self.consumable_group.append(heart)
 
     def play_sound(self, sound):
         if self.sound_on:

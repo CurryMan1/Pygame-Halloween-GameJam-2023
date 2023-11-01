@@ -296,12 +296,14 @@ class Projectile(Entity):
         if self.get_bound(self.BOUND):
             return True
 
-class Heart(Entity):
+class Consumable(Entity):
     BOUND = 3000
     AIR_RESISTANCE = 0.95
+    DAMAGE = 750
+    KB = 60
 
-    def __init__(self, x: int, y: int, vel: int, image: pygame.surface.Surface):
-        super().__init__(x, y, image)
+    def __init__(self, x: int, y: int, vel: int, image: pygame.surface.Surface, tag=None):
+        super().__init__(x, y, image, tag)
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = random.randint(-vel, vel), random.randint(-vel, vel)
 
