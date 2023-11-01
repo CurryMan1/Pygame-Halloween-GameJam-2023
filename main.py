@@ -123,15 +123,15 @@ class Game:
                            text_size=50,
                            text_colour=WHITE, border_width=5)
 
-        sound_btn = Button(WIDTH/5, 350, 450, 120, text='Sound:ON', fg=DARK_GREY, bg=LIGHT_GREY,
+        sound_btn = Button(WIDTH/5, 350, 450, 120, text=f'Sound:{["OFF", "ON"][self.sound_on]}', fg=DARK_GREY, bg=LIGHT_GREY,
                            text_size=70,
                            text_colour=WHITE, border_width=5)
 
-        performance_btn = Button(WIDTH/2+10, 350, 450, 120, text='Effects:ON', fg=DARK_GREY, bg=LIGHT_GREY,
+        performance_btn = Button(WIDTH/2+10, 350, 450, 120, text=f'Effects:{["OFF", "ON"][self.effects_on]}', fg=DARK_GREY, bg=LIGHT_GREY,
                            text_size=65,
                            text_colour=WHITE, border_width=5)
 
-        shake_btn = Button(WIDTH/5, 550, 450, 120, text='Shake:ON', fg=DARK_GREY, bg=LIGHT_GREY,
+        shake_btn = Button(WIDTH/5, 550, 450, 120, text=f'Shake:{["OFF", "ON"][self.shake_enabled]}', fg=DARK_GREY, bg=LIGHT_GREY,
                             text_size=70,
                             text_colour=WHITE, border_width=5)
 
