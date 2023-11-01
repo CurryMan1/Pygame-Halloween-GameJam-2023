@@ -29,9 +29,10 @@ class Healthbar:
             pass #this means that health < 0 so next frame the enemy will be deleted
 
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, x: int, y: int, image: pygame.surface.Surface):
+    def __init__(self, x: int, y: int, image: pygame.surface.Surface, tag: str=None):
         super().__init__()
 
+        self.tag = tag
         self.image = image
         self.rect = self.image.get_rect(center=(x, y))
 
@@ -50,7 +51,7 @@ class Shield(Entity):
 
     def toggle(self):
         self.enabled = 1-self.enabled
-        self.hp = 200
+        self.hp = 350
 
     def hit(self, damage):
         self.hp -= damage
@@ -102,7 +103,7 @@ class Player(Entity):
             self.last_shot += 1
 
         if self.on_cooldown:
-            if abs(self.x_vel) < 1 and abs(self.y_vel) < 1:
+            if abs(self.x_vel) < 1.5 and abs(self.y_vel) < 1.5:
                 self.on_cooldown = False
 
     def hit(self, damage):
@@ -282,8 +283,7 @@ class Projectile(Entity):
     DAMAGE = 10
 
     def __init__(self, x: int, y: int, x_vel: float, y_vel: float, image: pygame.surface.Surface, tag: str=None):
-        super().__init__(x, y, image)
-        self.tag = tag
+        super().__init__(x, y, image, tag)
         self.mask = pygame.mask.from_surface(self.image)
         self.x_vel, self.y_vel = x_vel, y_vel
         self.speed = x_vel+y_vel

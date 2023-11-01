@@ -1,6 +1,7 @@
 #modules
 import sys
 from math import ceil
+from webbrowser import open
 #files
 from entities import *
 from ui import *
@@ -10,9 +11,9 @@ pygame.mixer.init()
 pygame.mouse.set_visible(False)
 
 #theme
-# pygame.mixer.music.set_volume(0.1)
-# pygame.mixer.music.load('assets/sound/theme.wav')
-# pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.load('assets/sound/theme.wav')
+pygame.mixer.music.play(-1)
 
 FPS = 60
 CLOCK = pygame.time.Clock()
@@ -57,6 +58,7 @@ class Game:
             self.upgrade_button_group.append(u_btn)
 
         #other
+        self.logo = load_img('logo.png', True)
         self.crosshair = load_img('crosshair.png', True, 3)
         self.overlay = load_img('overlay.png', True)
         self.plasmaball_img = load_img('plasmaball.png', True, 0.1)
@@ -66,19 +68,150 @@ class Game:
         self.squid_imgs = load_imgs('squid', True, 0.7)
 
         #game vars
+        self.sound_on = 1
+        self.effects_on = 1
         self.hearts = 0
         self.screen_shake = 0
         self.enemy_delay = 240
         self.last_enemy = self.enemy_delay
 
-        ###########
-        self.main()
+    def start(self):
+        start_btn = Button(WIDTH/2-400, HEIGHT/2+30, 800, 150, text='Start', fg=DARK_GREY, bg=LIGHT_GREY, text_size=90,
+                           text_colour=WHITE, border_width=5)
+
+        settings_btn = Button(WIDTH/2-400, HEIGHT/2+190, 800, 150, text='Settings', fg=DARK_GREY, bg=LIGHT_GREY, text_size=90,
+                           text_colour=WHITE, border_width=5)
+
+        while True:
+            CLOCK.tick(FPS)
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            #bg
+            for i, coords_and_bg in enumerate(self.bg_tile_group):  #bg_tile_group
+                x, y, bg = coords_and_bg
+
+                diff_x = x - WIDTH
+                diff_y = y - HEIGHT
+
+                #works regardless of window size (if FOV is bigger than tile)
+                if 0 < diff_x:
+                    x = WIDTH - (self.bg_dimensions[0] * self.bg_w) + diff_x
+                elif x < WIDTH - (self.bg_dimensions[0] * self.bg_w):
+                    diff_x = x - (WIDTH - (self.bg_dimensions[0] * self.bg_w))
+                    x = WIDTH + diff_x
+
+                if 0 < diff_y:
+                    y = HEIGHT - (self.bg_dimensions[1] * self.bg_h) + diff_y
+                elif y < HEIGHT - (self.bg_dimensions[1] * self.bg_h):
+                    diff_y = y - (HEIGHT - (self.bg_dimensions[1] * self.bg_h))
+                    y = HEIGHT + diff_y
+
+                DISPLAY.blit(bg, (x, y))
+
+            DISPLAY.blit(self.logo, (WIDTH/2-self.logo.get_width()/2, 60))
+
+            if start_btn.is_clicked(DISPLAY):
+                self.main()
+            if settings_btn.is_clicked(DISPLAY):
+                self.settings(self.start)
+
+            #crosshair
+            DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            SCREEN.blit(DISPLAY, (0, 0))
+
+            pygame.display.update()
+
+    def settings(self, last_menu):
+        title_box = get_box(900, 200, 10, BLACK, DARK_GREY)
+
+        back_btn = Button(10, 10, 170, 120, text='Back', fg=DARK_GREY, bg=LIGHT_GREY,
+                           text_size=50,
+                           text_colour=WHITE, border_width=5)
+
+        sound_btn = Button(WIDTH/5, 350, 450, 120, text='Sound:ON', fg=DARK_GREY, bg=LIGHT_GREY,
+                           text_size=70,
+                           text_colour=WHITE, border_width=5)
+
+        performance_btn = Button(WIDTH/2+10, 350, 450, 120, text='Effects:ON', fg=DARK_GREY, bg=LIGHT_GREY,
+                           text_size=65,
+                           text_colour=WHITE, border_width=5)
+
+        github_btn = Button(WIDTH/2-300, 550, 600, 120, text='Github Repo', fg=DARK_GREY, bg=LIGHT_GREY,
+                           text_size=70,
+                           text_colour=WHITE, border_width=5)
+
+        while True:
+            CLOCK.tick(FPS)
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            #bg
+            for i, coords_and_bg in enumerate(self.bg_tile_group): #bg_tile_group
+                x, y, bg = coords_and_bg
+
+                diff_x = x - WIDTH
+                diff_y = y - HEIGHT
+
+                #works regardless of window size (if FOV is bigger than tile)
+                if 0 < diff_x:
+                    x = WIDTH - (self.bg_dimensions[0] * self.bg_w) + diff_x
+                elif x < WIDTH - (self.bg_dimensions[0] * self.bg_w):
+                    diff_x = x - (WIDTH - (self.bg_dimensions[0] * self.bg_w))
+                    x = WIDTH + diff_x
+
+                if 0 < diff_y:
+                    y = HEIGHT - (self.bg_dimensions[1] * self.bg_h) + diff_y
+                elif y < HEIGHT - (self.bg_dimensions[1] * self.bg_h):
+                    diff_y = y - (HEIGHT - (self.bg_dimensions[1] * self.bg_h))
+                    y = HEIGHT + diff_y
+
+                DISPLAY.blit(bg, (x, y))
+
+            #title
+            DISPLAY.blit(title_box, (WIDTH/2-title_box.get_width()/2, 120-title_box.get_height()/2))
+            draw_text('Settings', PIXEL_FONT, WHITE, WIDTH/2, 120, 150, DISPLAY, True)
+
+            #buttons
+            if back_btn.is_clicked(DISPLAY):
+                last_menu()
+            if sound_btn.is_clicked(DISPLAY):
+                self.sound_on = 1-self.sound_on
+                sound_btn.text = f'Sound:{["OFF", "ON"][self.sound_on]}'
+                if pygame.mixer.music.get_busy():
+                    pygame.mixer.music.pause()
+                else:
+                    pygame.mixer.music.unpause()
+            if performance_btn.is_clicked(DISPLAY):
+                self.effects_on = 1-self.effects_on
+                performance_btn.text = f'Effects:{["OFF", "ON"][self.effects_on]}'
+
+            if github_btn.is_clicked(DISPLAY):
+                open('https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023')
+
+            #crosshair
+            DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            SCREEN.blit(DISPLAY, (0, 0))
+
+            pygame.display.update()
 
     def main(self):
         clicked = False
         can_shoot_torpedo = False
 
-        for i in range(10):
+        for i in range(5):
             e = random.choice([Enemy(self.squid_imgs), PlasmaEnemy([self.plasmaenemy_img])])
             self.enemy_group.append(e)
 
@@ -121,7 +254,6 @@ class Game:
 
             #DRAW AND UPDATE
             #bg
-            DISPLAY.fill((0, 0, 0))
             for i, coords_and_bg in enumerate(self.bg_tile_group): #bg_tile_group
                 x, y, bg = coords_and_bg
 
@@ -146,24 +278,25 @@ class Game:
                 DISPLAY.blit(bg, (x, y))
 
             #particles
-            for particle in self.particles:
-                particle[0][0] += particle[1][0] + player_x_vel
-                particle[0][1] += particle[1][1] + player_y_vel
-                particle[2] -= particle[3]
+            if self.effects_on:
+                for particle in self.particles:
+                    particle[0][0] += particle[1][0] + player_x_vel
+                    particle[0][1] += particle[1][1] + player_y_vel
+                    particle[2] -= particle[3]
 
-                if particle[5] == 'bubble':
-                    #outline
-                    pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
+                    if particle[5] == 'bubble':
+                        #outline
+                        pygame.draw.circle(DISPLAY, WHITE, particle[0], particle[2] + 1)
 
-                elif particle[5] == 'torpedo':
-                    collision_rect = pygame.rect.Rect(particle[0][0]-particle[2], particle[0][1]-particle[2], particle[2]*2, particle[2]*2)
-                    for enemy in collision_rect.collideobjectsall(self.enemy_group):
-                        enemy.hit(100)
+                    elif particle[5] == 'torpedo':
+                        collision_rect = pygame.rect.Rect(particle[0][0]-particle[2], particle[0][1]-particle[2], particle[2]*2, particle[2]*2)
+                        for enemy in collision_rect.collideobjectsall(self.enemy_group):
+                            enemy.hit(100)
 
-                #main particle
-                pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
-                if particle[2] <= 0:
-                    self.particles.remove(particle)
+                    #main particle
+                    pygame.draw.circle(DISPLAY, particle[4], particle[0], particle[2])
+                    if particle[2] <= 0:
+                        self.particles.remove(particle)
 
             #heart_group
             for heart in self.heart_group:
@@ -225,6 +358,7 @@ class Game:
                             self.anchor.torpedo_enabled = True
                             self.anchor.mode = 'still'
                             self.anchor.x_vel, self.anchor.y_vel = 0,0
+                            self.anchor.rect.center = CENTER
 
             #splash_texts
             for sp_text in self.splash_texts:
@@ -234,7 +368,6 @@ class Game:
                 draw_text(text, PIXEL_FONT, colour, x, y, 50, DISPLAY, True, opacity)
                 if opacity <= 0:
                     self.splash_texts.remove(sp_text)
-
 
             #crosshair
             DISPLAY.blit(self.crosshair, (mouse_pos[0] - self.crosshair.get_width() / 2, mouse_pos[1] - self.crosshair.get_height() / 2))
@@ -305,10 +438,11 @@ class Game:
 
                 #player.shield-projectile_group
                 for projectile in pygame.sprite.spritecollide(self.player.shield, self.projectile_group, False, pygame.sprite.collide_mask):
-                    self.projectile_group.remove(projectile)
-                    self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, WHITE], 'plasma')
-                    if self.player.shield.hit(projectile.DAMAGE):
-                        self.add_particles(CENTER, 50, 20, 140, 0.15, [BUBBLE_BLUE, WHITE], 'shield')
+                    if projectile.tag != 'torpedo':
+                        self.projectile_group.remove(projectile)
+                        self.add_particles(projectile.rect.center, 30, 10, 70, 0.15, [PLASMA_GREEN, WHITE], 'plasma')
+                        if self.player.shield.hit(projectile.DAMAGE):
+                            self.add_particles(CENTER, 50, 20, 140, 0.15, [BUBBLE_BLUE, WHITE], 'shield')
 
             ####################################
             for event in pygame.event.get():
@@ -341,5 +475,10 @@ class Game:
             heart = Heart(pos[0], pos[1], 5, self.heart_img)
             self.heart_group.append(heart)
 
+    def play_sound(self, sound):
+        if self.sound_on:
+            sound.play()
+
 if __name__ == '__main__':
     g = Game()
+    g.start()
