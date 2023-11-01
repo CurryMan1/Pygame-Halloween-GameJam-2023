@@ -42,9 +42,9 @@ class Game:
         self.splash_texts = []
 
         #upgrade buttons
-        upgrade_btn_tags = [['shield', 30], ['torpedo', 60], ['quad damage', 45], ['sharp anchor', 15]]
+        self.upgrade_btn_tags = [['shield', 30], ['torpedo', 60], ['quad damage', 45], ['sharp anchor', 15]]
 
-        for i, btn in enumerate(upgrade_btn_tags):
+        for i, btn in enumerate(self.upgrade_btn_tags):
             tag, price = btn
 
             u_btn = UpgradeButton(i*210+10, HEIGHT-210, tag, price)
@@ -64,10 +64,9 @@ class Game:
         #game vars
         self.sound_on = 1
         self.effects_on = 1
+        self.shake_enabled = 1
         self.hearts = 0
         self.screen_shake = 0
-        self.enemy_delay = 240
-        self.last_enemy = self.enemy_delay
 
         #sound
         self.siren_sound = load_sound('sub/siren.mp3')
@@ -132,7 +131,11 @@ class Game:
                            text_size=65,
                            text_colour=WHITE, border_width=5)
 
-        github_btn = Button(WIDTH/2-300, 550, 600, 120, text='Github Repo', fg=DARK_GREY, bg=LIGHT_GREY,
+        shake_btn = Button(WIDTH/5, 550, 450, 120, text='Shake:ON', fg=DARK_GREY, bg=LIGHT_GREY,
+                            text_size=70,
+                            text_colour=WHITE, border_width=5)
+
+        github_btn = Button(WIDTH/2+10, 550, 450, 120, text='Github', fg=DARK_GREY, bg=LIGHT_GREY,
                            text_size=70,
                            text_colour=WHITE, border_width=5)
 
@@ -161,7 +164,9 @@ class Game:
             if performance_btn.is_clicked(DISPLAY):
                 self.effects_on = 1-self.effects_on
                 performance_btn.text = f'Effects:{["OFF", "ON"][self.effects_on]}'
-
+            if shake_btn.is_clicked(DISPLAY):
+                self.shake_enabled = 1-self.shake_enabled
+                shake_btn.text = f'Shake:{["OFF", "ON"][self.shake_enabled]}'
             if github_btn.is_clicked(DISPLAY):
                 open('https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023')
 
@@ -195,7 +200,7 @@ class Game:
         can_shoot_torpedo = False
         quad_damage_timer = 0
 
-        enemy_spawn_delay = 30*FPS
+        enemy_spawn_delay = 20*FPS
         frames_since_last_enemy = enemy_spawn_delay-2*FPS
         score = 0
 
@@ -488,9 +493,10 @@ class Game:
                     sys.exit()
 
             screen_offset = [0, 0]
-            if self.screen_shake > 0:
-                screen_offset = [random.randint(-4, 4), random.randint(-4, 4)]
-                self.screen_shake -= 1
+            if self.shake_enabled:
+                if self.screen_shake > 0:
+                    screen_offset = [random.randint(-4, 4), random.randint(-4, 4)]
+                    self.screen_shake -= 1
 
             SCREEN.blit(DISPLAY, screen_offset)
 
@@ -519,17 +525,15 @@ class Game:
         self.player.damage = 10
 
         #upgrade buttons
-        upgrade_btn_tags = ['shield', 'torpedo', '4x damage']
+        for i, btn in enumerate(self.upgrade_btn_tags):
+            tag, price = btn
 
-        for i, tag in enumerate(upgrade_btn_tags):
-            u_btn = UpgradeButton(i * 210 + 10, HEIGHT - 210, tag, 50)
+            u_btn = UpgradeButton(i * 210 + 10, HEIGHT - 210, tag, price)
             self.upgrade_button_group.append(u_btn)
 
         #game vars
         self.hearts = 0
         self.screen_shake = 0
-        self.enemy_delay = 240
-        self.last_enemy = self.enemy_delay
 
         opacity = 0
         while True:
