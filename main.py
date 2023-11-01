@@ -394,7 +394,8 @@ class Game:
             #player hp
             dec = self.player.hp/self.player.MAX_HP
             #siren
-            pygame.mixer.Channel(0).set_volume(max(0.25 - dec, 0))
+            if self.sound_on:
+                pygame.mixer.Channel(0).set_volume(max(0.25 - dec, 0))
             #tint
             tint = DISPLAY.copy()
             tint.fill(RED, special_flags=pygame.BLEND_RGB_MULT)
