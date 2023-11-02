@@ -1,8 +1,6 @@
 # Anchor
 Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
-![](https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023/blob/main/readme_img/cover.png)
-
 [How To Play](#HowToPlay)
 
 [Controls](#Controls)
@@ -10,6 +8,8 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 [Creators](#Creators)
 
 [Itch.io](https://curryman1.itch.io/anchor)
+
+
 
 <a name="HowToPlay" />
 
@@ -35,7 +35,12 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 - Stay vigilant, gather hearts, and face the horrors of the deep to emerge victorious in this heart-pounding underwater adventure!
 
-![](https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023/blob/main/readme_img/1.png)
+![](https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023/blob/main/Readme_Images/Screenshot%201.PNG)
+
+
+
+
+
 
 <a name="Upgrades" />
 
@@ -48,7 +53,7 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 |Quad Damage  |intensifies your attacks, dealing 4x damage for 10 seconds |45       |
 |Sharp Anchor |sharpens your anchor, adding 5 damage per upgrade          |15       |
 
-![Shield Being Used:](https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023/blob/main/readme_img/2.png)
+
 
 <a name="Controls" />
 
