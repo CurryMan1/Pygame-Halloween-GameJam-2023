@@ -200,7 +200,7 @@ class Game:
         can_shoot_torpedo = False
         quad_damage_timer = 0
 
-        enemy_spawn_delay = 10*FPS
+        enemy_spawn_delay = 12*FPS
         frames_since_last_enemy = enemy_spawn_delay-2*FPS
         score = 0
 
@@ -212,7 +212,7 @@ class Game:
             #score
             score += 1
             if self.player.hp < self.player.MAX_HP:
-                self.player.hp += 0.1
+                self.player.hp += 0.15
 
             #mouse and keys
             mouse_pos = pygame.mouse.get_pos()
@@ -299,7 +299,7 @@ class Game:
                     self.enemy_group.append(e)
                 frames_since_last_enemy = 0
                 if enemy_spawn_delay > 5*FPS:
-                    enemy_spawn_delay -= 0.3
+                    enemy_spawn_delay -= 60
 
                 #mine
                 while True:
@@ -322,6 +322,8 @@ class Game:
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
                                1, 14, 10, 0.3, [BUBBLE_BLUE], 'bubble')
+
+            print(self.player.hp)
 
             #quad damage
             if quad_damage_timer > 0:
@@ -470,6 +472,7 @@ class Game:
                 if consumable.tag == 'seamine':
                     self.screen_shake = 30
                     self.hit_player(consumable)
+                    self.splash_texts.append(['SEAMINE', 256, (WIDTH/2, 200), YELLOW])
                     self.add_particles(consumable.rect.center, 50, 25, 20, 0.5, [RED, ORANGE, YELLOW], 'seamine')
                 else:
                     self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
