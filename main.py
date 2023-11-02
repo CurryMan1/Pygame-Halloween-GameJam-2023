@@ -69,10 +69,29 @@ class Game:
         self.screen_shake = 0
 
         #sound
+        #menu
+        self.click_sound = load_sound('menu/click.wav', 0.1)
+        self.upgrade_fail_sound = load_sound('menu/upgrade_fail.mp3', 0.2)
+        self.upgrade_success_sound = load_sound('menu/upgrade_success.mp3', 0.2)
+
+        #squid
+        self.squid_death_sound = load_sound('squid/death.mp3', 1)
+        self.plasmaball_shot_sound = load_sound('squid/plasmaball_shot.wav', 0.05)
+
+        #sub
+        self.player_death_sound = load_sound('sub/death.wav', 0.8)
+        self.hit_enemy_sound = load_sound('sub/hit_enemy.wav', 0.6)
+        self.player_hit_sound = load_sound('sub/player_hit.wav', 0.4)
+        self.shield_break_sound = load_sound('sub/shield_break.wav', 0.6)
         self.siren_sound = load_sound('sub/siren.mp3')
+        self.torpedo_release_sound = load_sound('sub/torpedo_release.wav', 0.8)
+
+        #general
+        self.explosion_sound = load_sound('explosion.wav')
+        self.game_start_sound = load_sound('game_start.wav', 0.05)
 
     def start(self, first=False):
-        if first:
+        if first and self.sound_on:
             pygame.mixer.music.load('assets/sound/theme.wav')
             pygame.mixer.music.play(-1)
 
@@ -93,8 +112,10 @@ class Game:
             DISPLAY.blit(self.logo, (WIDTH/2-self.logo.get_width()/2, 60))
 
             if start_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 return self.main()
             if settings_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 return self.settings(self.start)
 
             #overlay
@@ -153,8 +174,10 @@ class Game:
 
             #buttons
             if back_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 return last_menu()
             if sound_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 self.sound_on = 1-self.sound_on
                 sound_btn.text = f'Sound:{["OFF", "ON"][self.sound_on]}'
                 if pygame.mixer.music.get_busy():
@@ -162,12 +185,15 @@ class Game:
                 else:
                     pygame.mixer.music.unpause()
             if performance_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 self.effects_on = 1-self.effects_on
                 performance_btn.text = f'Effects:{["OFF", "ON"][self.effects_on]}'
             if shake_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 self.shake_enabled = 1-self.shake_enabled
                 shake_btn.text = f'Shake:{["OFF", "ON"][self.shake_enabled]}'
             if github_btn.is_clicked(DISPLAY):
+                self.play_sound(self.click_sound)
                 open('https://github.com/CurryMan1/Pygame-Halloween-GameJam-2023')
 
             #overlay
@@ -190,8 +216,11 @@ class Game:
             pygame.display.update()
 
     def main(self):
-        pygame.mixer.music.load('assets/sound/ambience.wav')
-        pygame.mixer.music.play()
+        if self.sound_on:
+            pygame.mixer.music.load('assets/sound/ambience.wav')
+            pygame.mixer.music.play()
+
+            self.play_sound(self.game_start_sound)
 
         pygame.mixer.Channel(0).set_volume(0)
         pygame.mixer.Channel(0).play(self.siren_sound, -1)
@@ -203,7 +232,6 @@ class Game:
         enemy_spawn_delay = 12*FPS
         frames_since_last_enemy = enemy_spawn_delay-2*FPS
         score = 0
-
 
         #game loop
         while True:
@@ -230,6 +258,7 @@ class Game:
                         elif self.anchor.mode == 'away':
                             self.anchor.mode = 'return'
                     else:
+                        self.play_sound(self.torpedo_release_sound)
                         torpedo = Projectile(*CENTER, *calculate_kb(mouse_pos, CENTER, self.anchor.SPEED+10), self.anchor.image, 'torpedo')
                         self.projectile_group.append(torpedo)
                         self.anchor.torpedo_enabled = False
@@ -284,10 +313,12 @@ class Game:
             #enemy_group
             for enemy in self.enemy_group:
                 if enemy.update(player_x_vel, player_y_vel):
+                    self.play_sound(self.squid_death_sound)
                     self.enemy_group.remove(enemy)
                     self.add_hearts(enemy.rect.center, random.randint(2, 6))
                 if hasattr(enemy, 'last_shot'):
                     if enemy.last_shot == enemy.SHOOTING_DELAY:
+                        self.play_sound(self.plasmaball_shot_sound)
                         pball = Projectile(*enemy.rect.center, *calculate_kb(CENTER, enemy.rect.center, enemy.SHOOTING_SPEED), self.plasmaball_img, 'plasmaball')
                         self.projectile_group.append(pball)
                         enemy.last_shot = 0
@@ -302,16 +333,15 @@ class Game:
                     enemy_spawn_delay -= 60
 
                 #mine
-                while True:
-                    for i in range(2):
+                for i in range(10):
+                    while True:
                         position_x = random.randint(-2000, WIDTH+2000)
                         position_y = random.randint(-2000, HEIGHT+2000)
-                        if position_x not in range(0, WIDTH) and\
+                        if position_x not in range(0, WIDTH) or\
                             position_y not in range(0, HEIGHT):
                             mine = Consumable(position_x, position_y, 0, self.seamine_img, 'seamine')
                             self.consumable_group.append(mine)
                             break
-                    break
             else:
                 frames_since_last_enemy += 1
 
@@ -322,8 +352,6 @@ class Game:
             self.player.draw(DISPLAY)
             self.add_particles(([self.player.rect.right, self.player.rect.left][self.player.img_no], self.player.rect.centery),
                                1, 14, 10, 0.3, [BUBBLE_BLUE], 'bubble')
-
-            print(self.player.hp)
 
             #quad damage
             if quad_damage_timer > 0:
@@ -370,10 +398,13 @@ class Game:
                 for button in self.upgrade_button_group:
                     if button.is_clicked(DISPLAY):
                         if self.hearts >= button.price:
+                            self.play_sound(self.upgrade_success_sound)
                             charge = True
                             if button.text == 'shield':
                                 if not self.player.shield.enabled:
                                     self.player.shield.toggle()
+                                else:
+                                    charge = False
                             elif button.text == 'torpedo':
                                 self.anchor.torpedo_enabled = True
                                 self.anchor.mode = 'still'
@@ -392,6 +423,10 @@ class Game:
                                 self.splash_texts.append([f'-{button.price}', 256, *mouse_pos, RED])
                                 self.hearts -= button.price
                                 button.price = round(button.price*1.2)
+                            else:
+                                self.play_sound(self.upgrade_fail_sound)
+                        else:
+                            self.play_sound(self.upgrade_fail_sound)
 
             #light
             DISPLAY.blit(self.light, (
@@ -426,7 +461,9 @@ class Game:
             if self.anchor.mode != 'still':
                 #anchor-enemy_group
                 for enemy in pygame.sprite.spritecollide(self.anchor, self.enemy_group, False, pygame.sprite.collide_mask):
+                    self.play_sound(self.hit_enemy_sound)
                     enemy.hit(self.player.damage)
+
                     enemy.on_cooldown = True
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, self.anchor.rect.center, 14)
                     self.anchor.mode = 'return'
@@ -440,13 +477,16 @@ class Game:
                 if consumable.tag != 'seamine':
                     self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
                     self.hearts += 1
-                else:
+                elif self.anchor.mode != 'still':
                     self.add_particles(consumable.rect.center, 50, 25, 20, 0.5, [RED, ORANGE, YELLOW], 'seamine')
+                else:
+                    self.consumable_group.append(consumable)
 
             #projectile_group-enemy_group
             collided_projectiles = pygame.sprite.groupcollide(self.projectile_group, self.enemy_group, False, False, pygame.sprite.collide_mask)
             for projectile in collided_projectiles.keys():
                 if projectile.tag == 'torpedo':
+                    self.play_sound(self.explosion_sound)
                     self.projectile_group.remove(projectile)
                     enemies = collided_projectiles[projectile]
                     for enemy in enemies:
@@ -470,12 +510,13 @@ class Game:
             for consumable in pygame.sprite.spritecollide(self.player, self.consumable_group, False, pygame.sprite.collide_mask):
                 self.consumable_group.remove(consumable)
                 if consumable.tag == 'seamine':
+                    self.play_sound(self.explosion_sound)
                     self.screen_shake = 30
                     self.hit_player(consumable)
-                    self.splash_texts.append(['SEAMINE', 256, (WIDTH/2, 200), YELLOW])
+                    self.splash_texts.append(['SEAMINE', 255, WIDTH/2, 400, YELLOW])
                     self.add_particles(consumable.rect.center, 50, 25, 20, 0.5, [RED, ORANGE, YELLOW], 'seamine')
                 else:
-                    self.splash_texts.append(['+1', 256, *consumable.rect.center, GREEN])
+                    self.splash_texts.append(['+1', 255, *consumable.rect.center, GREEN])
                     self.hearts += 1
 
             if self.player.shield.enabled:
@@ -484,6 +525,7 @@ class Game:
                     enemy.x_vel, enemy.y_vel = calculate_kb(enemy.rect.center, CENTER, enemy.KB*2)
                     enemy.on_cooldown = True
                     if self.player.shield.hit(enemy.DAMAGE):
+                        self.play_sound(self.shield_break_sound)
                         self.add_particles(CENTER, 50, 20, 140, 0.15, [BUBBLE_BLUE, WHITE], 'shield')
 
                 #player.shield-projectile_group
@@ -511,7 +553,8 @@ class Game:
             pygame.display.update()
 
     def player_dead(self, score):
-        pygame.mixer.Channel(0).fadeout(1)
+        pygame.mixer.Channel(0).stop()
+        self.play_sound(self.player_death_sound)
         belt = pygame.surface.Surface((WIDTH, 400))
         belt.fill(LIGHT_GREY)
 
@@ -584,6 +627,7 @@ class Game:
             pygame.display.update()
 
     def hit_player(self, sprite):
+        self.play_sound(self.player_hit_sound)
         self.player.x_vel, self.player.y_vel = calculate_kb(sprite.rect.center, CENTER, sprite.KB / 2)
         self.player.hit(sprite.DAMAGE)
         self.screen_shake = 20

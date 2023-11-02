@@ -1,4 +1,3 @@
-import pygame
 from utils import *
 
 def get_box(width, height, border_width, fg, bg):
