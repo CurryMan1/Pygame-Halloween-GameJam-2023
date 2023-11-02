@@ -7,7 +7,7 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 
 [Creators](#Creators)
 
-
+[Itch.io](https://curryman1.itch.io/anchor)
 
 
 
@@ -30,6 +30,8 @@ Anchor is a spooky ocean game made for the Pygame Community Halloween Jam 2023.
 - Accumulate hearts to purchase powerful [upgrades](#Upgrades)
 
 - Avoid the naval mines so you don't get blown up
+
+- As you adventure your crew slowly repairs your ship
 
 - Stay vigilant, gather hearts, and face the horrors of the deep to emerge victorious in this heart-pounding underwater adventure!
 
